@@ -1,0 +1,6 @@
+.vscode/
+bin/
+build/
+doc/
+thumbs.db
+.DS_Store
