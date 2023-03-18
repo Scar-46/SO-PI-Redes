@@ -252,5 +252,6 @@ int Socket::sendTo (void * buffer, int length, void *other ){
 }
 
 int Socket::recvFrom ( void * buffer, int length, void *other ){
-   return recvfrom(this->idSocket, buffer, length, 0, (struct sockaddr*) other, sizeof(sockaddr_in));
+   socklen_t len = sizeof(sockaddr_in);
+   return recvfrom(this->idSocket, buffer, length, 0, (struct sockaddr*) other, &len);
 }

@@ -97,24 +97,48 @@ int Socket::Connect( const char * host, int port ) {
   *
  **/
 int Socket::Connect( const char *host, const char *service ) {
-   int st = -1;
+   int st;
+   struct addrinfo hints;
+   struct addrinfo *result, *rp;
+   int s;
 
-   struct addrinfo hints, *result, *rp;
+   /* Obtain address(es) matching host/port */
 
    memset(&hints, 0, sizeof(struct addrinfo));
    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-   hints.ai_socktype = SOCK_STREAM; /* Stream socket */
+   hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
    hints.ai_flags = 0;
    hints.ai_protocol = 0;          /* Any protocol */
 
-   st = getaddrinfo( host, service, &hints, &result );
-
-   for ( rp = result; rp; rp = rp->ai_next ) {
-      st = connect( idSocket, rp->ai_addr, rp->ai_addrlen );
-      if ( 0 == st )
-         break;
+   s = getaddrinfo(host, service, &hints, &result);
+   if (s != 0) {
+      fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+      exit(2);
    }
-   freeaddrinfo( result );
+
+   /* getaddrinfo() returns a list of address structures.
+      Try each address until we successfully connect(2).
+      If socket(2) (or connect(2)) fails, we (close the socket
+      and) try the next address. */
+
+   for (rp = result; rp != NULL; rp = rp->ai_next) {
+      idSocket = socket(rp->ai_family, rp->ai_socktype,
+                        rp->ai_protocol);
+      if (idSocket == -1)
+         continue;
+
+      if (connect(idSocket, rp->ai_addr, rp->ai_addrlen) != -1)
+         break;                  /* Success */
+
+      close(idSocket);
+   }
+
+   if (rp == NULL) {               /* No address succeeded */
+      fprintf(stderr, "Could not connect\n");
+      exit(2);
+   }
+   
+   freeaddrinfo(result);           /* No longer needed */
    return st;
 }
 
