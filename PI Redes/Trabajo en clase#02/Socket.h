@@ -36,6 +36,7 @@ class Socket {
         int Shutdown( int mode );		// mode = { SHUT_RD, SHUT_WR, SHUT_RDWR }
         void SetIDSocket( int newId );
         int sendTo  ( void * buffer, int length, void *other ); 
+        int sendTo (const void * buffer, int length, void *other );
         int recvFrom  ( void * buffer, int length, void *other ); 
         
     private:

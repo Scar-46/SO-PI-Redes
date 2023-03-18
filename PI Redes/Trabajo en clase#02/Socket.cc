@@ -199,11 +199,18 @@ int Socket::Listen( int queue ) {
   *
  **/
 int Socket::Bind( int port ) {
-   int st = -1;
-   struct sockaddr * ha;
-   struct sockaddr_in host4;
-   struct sockaddr_in6 host6;
+   int st;
+   struct sockaddr_in server4;
 
+   memset( (char *) &server4, 0, sizeof( server4 ) );
+   server4.sin_family = AF_INET;
+   server4.sin_port = htons( port );
+   server4.sin_addr.s_addr = htonl( INADDR_ANY );
+   st = bind( idSocket, (sockaddr *) &server4, sizeof( server4 ) );
+   if ( -1 == st ) {	// check for errors
+      perror( "Socket::Bind" );
+      exit( 4 );
+   }
    return st;
 }
 
@@ -248,6 +255,10 @@ void Socket::SetIDSocket(int id){
 }
 
 int Socket::sendTo (void * buffer, int length, void *other ){
+   return sendto(this->idSocket, buffer, length, 0, (struct sockaddr*) other, sizeof(sockaddr_in));
+}
+
+int Socket::sendTo (const void * buffer, int length, void *other ){
    return sendto(this->idSocket, buffer, length, 0, (struct sockaddr*) other, sizeof(sockaddr_in));
 }
 
