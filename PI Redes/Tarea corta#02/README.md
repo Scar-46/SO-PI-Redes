@@ -1,20 +1,23 @@
-[Ejercicio propuesto: 2023/Mar/17; entrega 2023/Mar/24]
+[Ejercicio propuesto: 2023/Mar/17, entrega 2023/Mar/17]
 
 Objetivo
-   Completar una clase "Socket" en C++ para lograr el intercambio de mensajes entre computadoras que no comparten memoria
-   utilizando datagramas con el protocolo UDP en IPv6
+   Completar la clase "Socket" para lograr el intercambio de mensajes utilizando el protocolo UDP en IPv4
 
-Tareas
+Procedimiento
 
-   - Completar la clase C++ "Socket" para poder intercambiar mensajes entre procesos que no comparten memoria.
-     Se facilita la interfaz "Socket.h".  Para la esta etapa deben completar la funcionalidad para IPv6:
-     SentTo()
-     ReceiveFrom()
+1) Funcionamiento UDP
+   - Completar la clase "Socket" para poder intercambiar mensajes UDP
+      - Se facilita la interfaz "Socket.h"
+      - Programar los métodos: "sendTo" y "recvFrom", de manera que los procesos puedan intercambiar
+        mensajes utilizando UDP
 
-   - Los ejemplos "ipv6-udp-client.cc" y "ipv6-udp-server.cc" deben funcionar correctamente
-
-Descripción detallada
-   - Clase Socket
+   - Archivos facilitados:
+      (clase Socket de las asignaciones anteriores)
+      ipv4-udp-client.cc
+      ipv4-udp-server.cc
 
 Referencias
+   Acceso al manual de Unix: "man sendto" o "man recvfrom"
+
    https://os.ecci.ucr.ac.cr/ci0123/material/sockets-course.ppt
+

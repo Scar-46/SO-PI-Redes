@@ -4,5 +4,5 @@ build/
 doc/
 thumbs.db
 .DS_Store
-.out
-.o
+*.out
+*.o

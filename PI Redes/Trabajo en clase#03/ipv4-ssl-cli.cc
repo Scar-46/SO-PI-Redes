@@ -15,7 +15,7 @@
 
 int main( int argc, char * argv[] ) {
    char * os = (char *) "os.ecci.ucr.ac.cr";
-   char * reqOS = (char *) "GET /lego/figura=octupus HTTP/1.1\r\nhost: redes.ecci\r\n\r\n";
+   char * reqOS = (char *) "GET /lego/figure=octupus HTTP/1.1\r\nhost: redes.ecci\r\n\r\n";
    Socket s( 's', false );	// Create a new stream socket for IPv4
    char a[ SIZE ];
    int count;
