@@ -98,46 +98,23 @@ int Socket::Connect( const char * host, int port ) {
  **/
 int Socket::Connect( const char *host, const char *service ) {
    int st = -1;
-   struct addrinfo hints, *result, *rp;
-   int s;
 
-   /* Obtain address(es) matching host/port */
+   struct addrinfo hints, *result, *rp;
 
    memset(&hints, 0, sizeof(struct addrinfo));
    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-   hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+   hints.ai_socktype = SOCK_STREAM; /* Stream socket */
    hints.ai_flags = 0;
    hints.ai_protocol = 0;          /* Any protocol */
 
-   s = getaddrinfo(host, service, &hints, &result);
-   if (s != 0) {
-      fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-      exit(2);
+   st = getaddrinfo( host, service, &hints, &result );
+
+   for ( rp = result; rp; rp = rp->ai_next ) {
+      st = connect( idSocket, rp->ai_addr, rp->ai_addrlen );
+      if ( 0 == st )
+         break;
    }
-
-   /* getaddrinfo() returns a list of address structures.
-      Try each address until we successfully connect(2).
-      If socket(2) (or connect(2)) fails, we (close the socket
-      and) try the next address. */
-
-   for (rp = result; rp != NULL; rp = rp->ai_next) {
-      idSocket = socket(rp->ai_family, rp->ai_socktype,
-                        rp->ai_protocol);
-      if (idSocket == -1)
-         continue;
-
-      if (connect(idSocket, rp->ai_addr, rp->ai_addrlen) != -1)
-         break;                  /* Success */
-
-      close(idSocket);
-   }
-
-   if (rp == NULL) {               /* No address succeeded */
-      fprintf(stderr, "Could not connect\n");
-      exit(2);
-   }
-   
-   freeaddrinfo(result);           /* No longer needed */
+   freeaddrinfo( result );
    return st;
 }
 
@@ -223,13 +200,13 @@ int Socket::Listen( int queue ) {
  **/
 int Socket::Bind( int port ) {
    int st;
-   struct sockaddr_in6 server6;
+   struct sockaddr_in server4;
 
-   memset( (char *) &server6, 0, sizeof( server6 ) );
-   server6.sin6_family = AF_INET6;
-   server6.sin6_port = htons( port );
-   server6.sin6_addr = in6addr_any;
-   st = bind( idSocket, (sockaddr *) &server6, sizeof( server6 ) );
+   memset( (char *) &server4, 0, sizeof( server4 ) );
+   server4.sin_family = AF_INET;
+   server4.sin_port = htons( port );
+   server4.sin_addr.s_addr = htonl( INADDR_ANY );
+   st = bind( idSocket, (sockaddr *) &server4, sizeof( server4 ) );
    if ( -1 == st ) {	// check for errors
       perror( "Socket::Bind" );
       exit( 4 );
