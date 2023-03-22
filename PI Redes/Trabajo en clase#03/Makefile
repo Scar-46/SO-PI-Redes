@@ -18,8 +18,10 @@ $(info $$TARGETS = $(TARGETS))
 
 %.out: %.o Socket.o
 	$(info $$^ = $^)
-	$(CXX) $(LDFLAGS) $^ Socket.o -o $^
+	$(CXX) $^ Socket.o $(LDFLAGS) -o $^
 
 ipv4-ssl-cli.out: ipv4-ssl-cli.o Socket.o
-	$(CXX) $(CXXFLAGS) ssl-ipv4-test.o Socket.o -o $@
+	$(CXX)  ipv4-ssl-cli.o Socket.o $(LDFLAGS) -o $@
 
+clean:
+	rm -f *.o *.out

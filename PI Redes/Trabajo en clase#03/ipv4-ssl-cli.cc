@@ -22,8 +22,8 @@ int main( int argc, char * argv[] ) {
 
    memset( a, 0, SIZE );
    s.InitSSL();
-   s.SSLConnect( WM, (char *) "https" );
-   s.SSLWrite(  (void *) reqWM, strlen( reqWM ) );
+   s.SSLConnect( os, (char *) "https" );
+   s.SSLWrite(  (void *) reqOS, strlen( reqOS ) );
    while (  (count = s.SSLRead( a, SIZE )) > 0 ) {
       printf( "%s\n", a );
       memset( a, 0, SIZE );
