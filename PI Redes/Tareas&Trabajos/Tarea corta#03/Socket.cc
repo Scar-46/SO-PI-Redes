@@ -52,7 +52,6 @@ Socket::~Socket(){
       SSL_free((SSL*)this->SSLStruct);
       SSL_shutdown((SSL*) this->SSLStruct);
    }
-
    Close();
 }
 
