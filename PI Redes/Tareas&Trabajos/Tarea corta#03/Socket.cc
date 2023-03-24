@@ -48,9 +48,8 @@ Socket::Socket( char type, bool IPv6 ){
  **/
 Socket::~Socket(){
    if (this->SSLContext != NULL) {
-      SSL_CTX_free((SSL_CTX*) this->SSLContext);
       SSL_free((SSL*)this->SSLStruct);
-      SSL_shutdown((SSL*) this->SSLStruct);
+      SSL_CTX_free((SSL_CTX*) this->SSLContext);
    }
    Close();
 }
