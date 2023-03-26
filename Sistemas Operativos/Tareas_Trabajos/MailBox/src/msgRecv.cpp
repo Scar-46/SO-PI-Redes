@@ -12,19 +12,14 @@
 
 int main( int argc, char ** argv ) {
 
-
-   struct msgbuf {
-      long type;   // this field must exist at first place
-      char data[ MAXDATA ];        // char array for simplicity
-      // user can define other fields
-   } A;
-   int id, size, st;
+   int st;
    MailBox m;
+   char data[ MAXDATA ];
 
-   st = m.receive( 2023, (void *) A, sizeof( A ) );  // Receives a message with 2023 type
+   st = m.receive( 2023, (void *) data, sizeof( data ) );  // Receives a message with 2023 type
    while ( st > 0 ) {
-      printf("Label: %s\n", A.data );
-      st = m.receive( 2023, (void *) A, sizeof( A ) );
+      printf("Label: %s\n", data );
+      st = m.receive( 2023, (void *) data, sizeof( data ) );
    }
 
 }

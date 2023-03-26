@@ -17,16 +17,8 @@
 
 #include "MailBox.h"
 
-#define KEY 0xC12840
+#define KEY 0xA12345
 #define MAXDATA 512 // maximum size of message data
-
-
-struct msgbuffer {
-   long type;	// this field must exist at first place
-   char data[ MAXDATA ];	// char array for simplicity
-   // user can define other fields
-};
-
 
 /**
   *  Class constructor
@@ -64,11 +56,19 @@ MailBox::~MailBox() {
    // call msgctl to destroy this message queue
    // check for errors
    st = msgctl( this->id, IPC_RMID, NULL );
+
    if ( -1 == st ) {
       perror( "MailBox error: ~MailBox" );
       exit( 1 );
    }
 }
+
+struct msgbuf {
+   long type;	// this field must exist at first place
+   char data[ MAXDATA ];	// char array for simplicity
+   // user can define other fields
+};
+
 
 /**
   *   Send method
@@ -78,17 +78,18 @@ MailBox::~MailBox() {
   *   other fields must come as parameters, or build a specialized struct
   *
  **/
-int MailBox::send(long type, void* buffer, int numBytes) {
+int MailBox::send( long type, void * buffer, int numBytes ) {
    int st = -1;
 
-   // must declare a msgbuffer variable and set all the fields
-   struct msgbuffer m;
+   // must declare a msgbuf variable and set all the fields
+   struct msgbuf m;
    m.type = type;
-   memcpy((void*)m.data, buffer, numBytes);
+   memcpy( (void * ) m.data, buffer, numBytes );
    // set other fields if necessary
 
    // use msgsnd system call to send message to a queue
-   st = msgsnd(this->id, (void *) &m, sizeof(m.data), 0);
+   //st = msgsnd( this->id, (void *) &m, sizeof(msgbuf), 0 );
+   st = msgsnd( this->id, (void *) &m, numBytes, 0 );
 
    if (st == -1) {
       perror("MailBox error: send");
@@ -111,17 +112,14 @@ int MailBox::send(long type, void* buffer, int numBytes) {
 int MailBox::receive( long type, void * buffer, int capacity ) {
    int st = -1;
 
-   // must declare a msgbuffer variable 
-   struct msgbuffer m;
+   // must declare a msgbuf variable 
+   struct msgbuf m;
 
    // use msgrcv system call to receive a message from the queue
-   //  st = msgrcv( this->id, (void*) &m, sizeof(m.data), type, 0);
-   st = msgrcv( this->id, (void*) &m, sizeof(m.data), type, IPC_NOWAIT);
-   if (st == -1) {
-      perror("MailBox error: receive");
-      exit(1);
-   }
-   strcpy((char*)buffer, m.data);
+   //st = msgrcv( this->id, (void *) &m, sizeof(msgbuf), type, IPC_NOWAIT );
+   st = msgrcv( this->id, (void *) &m, capacity, type, 0 );
+   // copy data from m to parameter variables
+   memcpy( buffer, (void *) m.data, st );
 
    return st;
 

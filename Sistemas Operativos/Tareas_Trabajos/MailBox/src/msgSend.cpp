@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef SND
 
@@ -20,15 +21,15 @@ int main( int argc, char ** argv ) {
 
    int i ;
    MailBox m;
-
+   
    i = 0;
 
    while ( strlen( labels[ i ] ) ) {
-      m.send( 2023, (void *) labels[ i ], strlen( labels[ i ] ) );  // Send a message with 2023 type
+      m.send( 2023, (void *) labels[ i ], sizeof( labels[ i ] ) );  // Send a message with 2023 type
       printf("Label: %s\n", labels[ i ] );
       i++;
    }
-
+   _exit(2);
 }
 
 #endif // SND
