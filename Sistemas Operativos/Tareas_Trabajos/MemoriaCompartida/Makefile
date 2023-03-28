@@ -7,7 +7,7 @@ JC=javac
 DEFS=
 CSTD=-std=c17
 XSTD=-std=c++17
-FLAG= 
+FLAG= -pthread
 FLAGS=$(strip -Wall -Wextra $(FLAG) $(DEFS))
 FLAGC=$(FLAGS) $(CSTD)
 FLAGX=$(FLAGS) $(XSTD)

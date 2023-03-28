@@ -45,7 +45,6 @@ void* persona(void* data) {
    int direction = msgPublic->direction;
    while (true){
       sem_wait(&msgPublic->canPlay[msgPrivate->id]);
-
       /*
       int nextPlayer = (msgPrivate->id + direction) % msgPublic->playerCount;
       if (nextPlayer < 0) {
@@ -59,9 +58,11 @@ void* persona(void* data) {
       }
       if (!msgPrivate->out) {
          msgPublic->papa = cambiarPapa(msgPublic->papa);
+               printf("El jugador: %d tiene la papa caliente con valor: %d\n", (msgPrivate->id), msgPublic->papa);
          if (msgPublic->papa == 1) {
             msgPublic->playersOut++;
             msgPrivate->out = true;
+            msgPublic->papa = 1 + rand() % 1000;
             printf("El jugador: %d salió del juego\n", (msgPrivate->id));
          }
          if (msgPublic->playersOut == msgPublic->playerCount) {

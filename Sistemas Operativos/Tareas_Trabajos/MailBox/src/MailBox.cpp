@@ -116,7 +116,7 @@ int MailBox::receive( long type, void * buffer, int capacity ) {
 
    // use msgrcv system call to receive a message from the queue
    //  st = msgrcv( this->id, (void*) &m, sizeof(m.data), type, 0);
-   st = msgrcv( this->id, (void*) &m, sizeof(m.data), type, IPC_NOWAIT);
+   st = msgrcv( this->id, (void*) &m, capacity, type, 0);
    if (st == -1) {
       perror("MailBox error: receive");
       exit(1);
