@@ -59,7 +59,6 @@ int cambiarPapa( int papa ) {
 int persona(std::vector<sem_a_t> semsVector, int id, int sentido) {
    bool out = false;
    msg_t* msgPublic = (msg_t*)shmem.attach();
-   
    while (true){
       msg_t* msgPublic = (msg_t*)shmem.attach();
       semsVector[id-1].canPlay->Wait();
@@ -72,14 +71,15 @@ int persona(std::vector<sem_a_t> semsVector, int id, int sentido) {
          break;
       }
       if (!out) {
+         printf("El jugador %d tiene la papa %d\n", id, msgPublic->papa);
          msgPublic->papa = cambiarPapa(msgPublic->papa);
          if (msgPublic->papa == 1) {
             msgPublic->playersOut++;
+            printf("*Han salido %d jugadores de %d*\n", msgPublic->playersOut, msgPublic->playerCount);
             out = true;
             msgPublic->papa = 1 + rand() % 1000;
             printf("El jugador %d se fue del juego\n",id);
-         }
-         if (msgPublic->playersOut == msgPublic->playerCount) {
+         } else if (msgPublic->playersOut == msgPublic->playerCount -1) {
             printf("El jugador %d es el ganador\n", id);
             msgPublic->papa = -1;
          }
