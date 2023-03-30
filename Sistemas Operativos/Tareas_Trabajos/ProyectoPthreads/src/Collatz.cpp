@@ -43,41 +43,37 @@ void* persona(void* data) {
    msgp_t* msgPrivate = (msgp_t*) data;
    msg_t* msgPublic = msgPrivate->msg;
    int direction = msgPublic->direction;
+   int nextPlayer = (msgPrivate->id + direction) % msgPublic->playerCount;
+   if (nextPlayer < 0) {
+      nextPlayer = msgPublic->playerCount - 1;
+   }
    while (true){
       sem_wait(&msgPublic->canPlay[msgPrivate->id]);
-      /*
-      int nextPlayer = (msgPrivate->id + direction) % msgPublic->playerCount;
-      if (nextPlayer < 0) {
-         nextPlayer = msgPublic->playerCount - 1;
-      }
-      */
-
       if (msgPublic->papa == -1) {
-         sem_post(&msgPublic->canPlay[(msgPrivate->id + direction) % msgPublic->playerCount]);
+         sem_post(&msgPublic->canPlay[nextPlayer]);
          break;
       }
       if (!msgPrivate->out) {
          msgPublic->papa = cambiarPapa(msgPublic->papa);
-               printf("El jugador: %d tiene la papa caliente con valor: %d\n", (msgPrivate->id), msgPublic->papa);
+         printf("El jugador %d tiene la papa %d\n",msgPrivate->id +1, msgPublic->papa);
          if (msgPublic->papa == 1) {
             msgPublic->playersOut++;
             msgPrivate->out = true;
             msgPublic->papa = 1 + rand() % 1000;
-            printf("El jugador: %d salió del juego\n", (msgPrivate->id));
-         }
-         if (msgPublic->playersOut == msgPublic->playerCount) {
-            printf("El jugador: %d es el ganador!\n", (msgPrivate->id));
+            printf("El jugador %d se fue del juego\n",msgPrivate->id +1);
+            printf("*Han salido %d jugadores de %d*\n", msgPublic->playersOut, msgPublic->playerCount);
+         } else if (msgPublic->playersOut == msgPublic->playerCount -1) {
+            printf("El jugador %d es el ganador\n", msgPrivate->id +1);
             msgPublic->papa = -1;
          }
       }
-      
-      sem_post(&msgPublic->canPlay[(msgPrivate->id + direction) % msgPublic->playerCount]);
+      sem_post(&msgPublic->canPlay[nextPlayer]);
    }
    return NULL;
 }
 
 int main(int argc, char* argv[])  {
-   int playerCount = 10;
+   int playerCount = 100;
    int vi = 2023;
    int direction = 1;
    if ( argc > 1 ) { // Define la cantidad de playerCount
@@ -115,8 +111,6 @@ int main(int argc, char* argv[])  {
    srand(time(NULL));
    int firstPlayer = rand() % playerCount;
    int semValue;
-
-   // Creamos los hilos para cada jugador
    for (int i = 0; i < playerCount; i++) {
       // Inicializamos en 0 los semáforos para cada jugador (excepto el primero)
       if (i == firstPlayer) {
@@ -125,7 +119,10 @@ int main(int argc, char* argv[])  {
          semValue = 0;
       }
       sem_init(&msg->canPlay[i], /*pshared*/ 0, /*value*/ semValue);
-      
+   }
+
+   // Creamos los hilos para cada jugador
+   for (int i = 0; i < playerCount; i++) {
       // Inicializamos la memoria privada
       msgp[i].id = i;
       msgp[i].msg = msg;

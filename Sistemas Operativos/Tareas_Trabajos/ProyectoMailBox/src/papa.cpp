@@ -54,7 +54,7 @@ int cambiarPapa( int papa ) {
  *   Recibe la identificación del buzón, la identificación de la persona y el sentido de rotación
  *
  **/
-int persona(MailBox buzon, int id, int sentido, int participantes) {
+int persona(MailBox papaMail, MailBox playersLeft, int id, int sentido, int participantes) {
     info_t info;
     int hola;
     int papa;
@@ -96,7 +96,8 @@ int main( int cantidad, char ** valores ) {
     int vi = 2023; // Valor predefinido para la papa
     int sentido = -1; // Valor predefinido para el sentido de rotación
     int st;
-   MailBox buzon;
+   MailBox papaMail;
+   MailBox playersleft;
 
    if ( cantidad > 1 ) {   // Define la cantidad de participantes
       participantes = atoi( valores[ 1 ] );
@@ -121,32 +122,22 @@ int main( int cantidad, char ** valores ) {
       }
    }
 
-   srandom( time( 0 ) );   // Coloca una semilla para los números aleatorios
-
-   printf( "Creando una ronda de %d participantes\n", participantes );
-   for ( i = 1; i <= participantes; i++ ) {
-      if ( ! fork() ) {
-         persona( buzon, i , sentido, participantes);   // Este proceso simula una persona participante
-      }
-   }
-
+   srand(time(NULL));	// Coloca una semilla para los números aleatorios
+   int firstPlayer;
    do {              // Escoge el proceso que comienza el juego, definiendo el tipo de mensaje
       tipo = (random() % participantes) ;
    } while ( 0 == tipo );
-   info_t info;
-   int hola = 3;
-   info.papa = vi;
-   info.jugadoresFuera = 0;
-
-   printf( "Receptor del primer mensaje %d, valor de la papa %d\n",tipo, info.papa );
-   buzon.send(tipo, &hola, sizeof(int));
-
+   printf( "El jugador %d comienza el juego\n", tipo);
+   printf( "Creando una ronda de %d participantes\n", participantes );
    for ( i = 1; i <= participantes; i++ ) {
-      j = wait( &st );     // Esperar hasta que finalicen los procesos
+      if ( ! fork() ) {
+         persona( papaMail, playersleft, i , sentido, participantes);   // Este proceso simula una persona participante
+      }
    }
 
-   printf( "Main: valor de la papa %d\n", info.papa );
-
+   for ( i = 1; i <= participantes; i++ ) {
+      wait( &st );     // Esperar hasta que finalicen los procesos
+   }
 // Elimina los recursos compartidos
    return 0;
 }

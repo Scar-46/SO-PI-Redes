@@ -56,29 +56,28 @@ int cambiarPapa( int papa ) {
  *
  **/
 
-int persona(std::vector<sem_a_t> semsVector, int id, int sentido) {
+int persona(std::vector<sem_a_t> semsVector, int id, int direction) {
    bool out = false;
    msg_t* msgPublic = (msg_t*)shmem.attach();
+   int next = ((id-1) + direction) % msgPublic->playerCount;
+   if (next < 0) {
+      next = msgPublic->playerCount - 1;
+   }
    while (true){
-      msg_t* msgPublic = (msg_t*)shmem.attach();
       semsVector[id-1].canPlay->Wait();
-      int next = ((id-1) + sentido) % msgPublic->playerCount;
-      if (next < 0) {
-         next = msgPublic->playerCount - 1;
-      }
       if (msgPublic->papa == -1) {
          semsVector[next].canPlay->Signal();
          break;
       }
       if (!out) {
-         printf("El jugador %d tiene la papa %d\n", id, msgPublic->papa);
          msgPublic->papa = cambiarPapa(msgPublic->papa);
+         printf("El jugador %d tiene la papa %d\n", id, msgPublic->papa);
          if (msgPublic->papa == 1) {
             msgPublic->playersOut++;
-            printf("*Han salido %d jugadores de %d*\n", msgPublic->playersOut, msgPublic->playerCount);
             out = true;
             msgPublic->papa = 1 + rand() % 1000;
             printf("El jugador %d se fue del juego\n",id);
+            printf("*Han salido %d jugadores de %d*\n", msgPublic->playersOut, msgPublic->playerCount);
          } else if (msgPublic->playersOut == msgPublic->playerCount -1) {
             printf("El jugador %d es el ganador\n", id);
             msgPublic->papa = -1;
@@ -86,8 +85,6 @@ int persona(std::vector<sem_a_t> semsVector, int id, int sentido) {
       }
       semsVector[next].canPlay->Signal();
    }
-   
-   shmem.detach();
    _exit( 0 );	// Everything OK
 
 }
@@ -98,13 +95,13 @@ int persona(std::vector<sem_a_t> semsVector, int id, int sentido) {
  *
  **/
 int main( int cantidad, char ** valores ) {
-   int i, id, st, tipo;
+   int i, st;
    msg_t* area;
    msg_t message;
 
-   int participantes = 100;
+   int participantes = 5;
    int vi = 2023;
-   int sentido = 1;
+   int direction = 1;
    if ( cantidad > 1 ) { // Define la cantidad de playerCount
       participantes = atoi( valores[ 1 ] );
    }
@@ -114,15 +111,15 @@ int main( int cantidad, char ** valores ) {
    }
 
    if ( cantidad > 3 ) {	// Pueden utilizar la interpretación de este parámetro como mejor les convenga
-      sentido = atoi( valores[ 3 ] );
-      if ( sentido < 0 ) {
-         sentido = -1;		// El proceso i se la pasa al i - 1 (sugerencia)
+      direction = atoi( valores[ 3 ] );
+      if ( direction < 0 ) {
+         direction = -1;		// El proceso i se la pasa al i - 1 (sugerencia)
       } else {
-         sentido = +1;		// El proceso i se la pasa al i + 1
+         direction = +1;		// El proceso i se la pasa al i + 1
       }
    }
 
-      srand(time(NULL));	// Coloca una semilla para los números aleatorios
+   srand(time(NULL));	// Coloca una semilla para los números aleatorios
 
    area = (msg_t *) shmem.attach();
    message.papa = vi;
@@ -151,20 +148,17 @@ int main( int cantidad, char ** valores ) {
 
    for (i = 1; i <= participantes; i++ ) {
       if ( ! fork() ) {
-         persona(semsVector, i, sentido );	// Este proceso simula una persona participante
+         persona(semsVector, i, direction );	// Este proceso simula una persona participante
       }
    }
 
-   for ( i = 1; i <= participantes; i++ ) {
+   for ( i = 0; i < participantes; i++ ) {
       wait( &st );		// Esperar hasta que finalicen los procesos
+      delete semsVector[i].canPlay; // Elimina los semáforos
    }
 
-// Elimina los recursos compartidos
+   // Elimina los recursos compartidos
    shmem.detach();
-   for (i = 0; i < participantes; i++) {
-      delete semsVector[i].canPlay;
-   }
-
    return 0;
 }
 

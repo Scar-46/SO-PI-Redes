@@ -49,7 +49,6 @@ ShM::ShM( int size ) {
  **/
 ShM::~ShM() {
    int st;
-
    st = shmctl( this->id, IPC_RMID, NULL );
    if ( -1 == st ) {
       perror( "ShM::~ShM" );
