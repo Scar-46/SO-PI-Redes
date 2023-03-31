@@ -14,4 +14,3 @@ class MailBox {
       int id;		// mailbox id
 
 };
-

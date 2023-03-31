@@ -8,27 +8,20 @@
  *
  **/
 
-#include <stdio.h>   // printf function
-#include <stdlib.h>  // exit function
-#include <unistd.h>  // _exit function
-#include <ctime>  // time function
-#include <condition_variable> // std::condition_variable
-#include "MailBox.h"   // MailBox class
-#include<sys/wait.h>
+#include <stdio.h>	// printf function
+#include <unistd.h>	// _exit function
+#include <stdlib.h>    // atoi function
+#include <ctime>      // time function
+#include <string.h>
+#include <sys/wait.h>
 
-typedef struct info {
-   int papa;
-   int jugadoresFuera;
-} info_t;
+#include "MailBox.h"  // MailBox class
 
-struct msgbuf {         // Estructura ejemplo para el intercambio de mensajes
-   long mtype;
-   info_t info;      // Almacena el valor de la papa
-   // Pueden agregar todos los datos que consideren necesarios
+
+struct message {
+    long mtype;
+    int mnums[2];
 };
-
-
- 
 
 /**
   *  Aplica las reglas de Collatz al valor de la papa
@@ -38,15 +31,16 @@ struct msgbuf {         // Estructura ejemplo para el intercambio de mensajes
  **/
 int cambiarPapa( int papa ) {
 
-   if ( 1 == (papa & 0x1) ) {       // ¿La papa es impar?
-      papa = (papa << 1) + papa + 1;      // papa = papa * 2 + papa + 1 (papa * 3 + 1)
+   if ( 1 == (papa & 0x1) ) {			// ¿La papa es impar?
+      papa = (papa << 1) + papa + 1;		// papa = papa * 2 + papa + 1 (papa * 3 + 1)
    } else {
-      papa >>= 1;          // papa = papa / 2, utiliza corrimiento a la derecha, una posicion
+      papa >>= 1;				// papa = papa / 2, utiliza corrimiento a la derecha, una posicion
    }
 
    return papa;
 
 }
+
 
 /**
  *   Procedimiento para simular una persona participante en la ronda
@@ -54,35 +48,41 @@ int cambiarPapa( int papa ) {
  *   Recibe la identificación del buzón, la identificación de la persona y el sentido de rotación
  *
  **/
-int persona(MailBox papaMail, MailBox playersLeft, int id, int sentido, int participantes) {
-    info_t info;
-    int hola;
-    int papa;
-    int tipo;
-    bool out = false;
-    while (1) {
-         //printf("Persona %d ha entrado\n", id);
-         buzon.receive(id, &hola, sizeof(int));  // Recibe el mensaje del participante anterior
-         papa = info.papa;
-         tipo = (id + sentido) % participantes;  // Calcula el siguiente participante
-         printf("Persona %d recibió la papa %d\n", id, hola);
-         if (papa == -1) {  // Condición de salida para detener el juego
-            buzon.send(tipo, &info, sizeof(int));  // Envía el mensaje al siguiente participante
-            break;
-         }
-         if (!out) {
-            printf("Persona %d recibió la papa %d\n", id, papa);
-            papa = cambiarPapa(papa);  // Aplica las reglas de Collatz a la papa
-            if (papa == 1) {  // Si la papa es 1, entonces la persona ha perdido
-               printf("Persona %d ha perdido\n", id);
-               out = true;
-               info.jugadoresFuera++;  // Incrementa el número de jugadores que han perdido
-            }
-         }
-         info.papa = papa;
-         buzon.send(tipo, &hola, sizeof(int));  // Envía el mensaje al siguiente participante
+
+int persona(long id, int direction, int playerCount) {
+   struct message msg;
+   bool out = false;
+   MailBox m;
+   long next = ((id / 10) + direction) *10;
+   if (next <= 0) {
+      next = (playerCount) * 10;
+   } else if (next > playerCount * 10) {
+      next = 10;
+   }
+   while (true){
+      m.receive( id, &msg, sizeof( msg.mnums)*2 );
+      if (msg.mnums[0] == -1) {
+            m.send( next, &msg, sizeof( msg.mnums)*2 );
+         break;
       }
-    _exit(0);  // Todo ha terminado correctamente
+      if (!out) {
+         msg.mnums[0] = cambiarPapa(msg.mnums[0]);
+         printf("El jugador %ld tiene la papa %d\n", id / 10, msg.mnums[0]);
+         printf("El siguiente jugador es %ld\n", next / 10);
+         if (msg.mnums[0] == 1) {
+           msg.mnums[1]++;
+            out = true;
+            msg.mnums[0] = 1 + rand() % 1000;
+            printf("El jugador %ld se fue del juego\n",id / 10);
+            printf("*Han salido %d jugadores de %d*\n",msg.mnums[1],playerCount);
+         } else if (msg.mnums[1] == playerCount -1) {
+            printf("El jugador %ld es el ganador\n", id / 10);
+            msg.mnums[0] = -1;
+         }
+      }
+      m.send( next, &msg, sizeof( msg.mnums)*2 );
+   }
+   _exit( 0 );	// Everything OK
 }
 
 /**
@@ -91,53 +91,54 @@ int persona(MailBox papaMail, MailBox playersLeft, int id, int sentido, int part
  *
  **/
 int main( int cantidad, char ** valores ) {
-    int i, j, tipo;
-    int participantes = 10; // Valor predefinido para la cantidad de participantes
-    int vi = 2023; // Valor predefinido para la papa
-    int sentido = -1; // Valor predefinido para el sentido de rotación
-    int st;
-   MailBox papaMail;
-   MailBox playersleft;
+   long i;
+   int st;
+   int playerCount = 10;
+   int vi = 2023;
+   int direction = 1;
 
-   if ( cantidad > 1 ) {   // Define la cantidad de participantes
-      participantes = atoi( valores[ 1 ] );
-      if ( participantes <= 0 ) {
-         participantes = 100;
-      }
+   if ( cantidad > 1 ) { // Define la cantidad de playerCount
+      playerCount = atoi( valores[ 1 ] );
    }
 
-   if ( cantidad > 2 ) {   // Define el valor inicial de la papa
+   if ( cantidad > 2 ) { // Define el valor inicial de la papa
       vi = atoi( valores[ 2 ] );
-      if ( vi <= 0 ) {
-         vi = 2023;
-      }
    }
 
-   if ( cantidad > 3 ) {   // Pueden utilizar la interpretación de este parámetro como mejor les convenga
-      sentido = atoi( valores[ 2 ] );
-      if ( sentido < 0 ) {
-         sentido = -1;     // El proceso i se la pasa al i - 1 (sugerencia)
+   if ( cantidad > 3 ) {	// Pueden utilizar la interpretación de este parámetro como mejor les convenga
+      direction = atoi( valores[ 3 ] );
+      if ( direction < 0 ) {
+         direction = -1;		// El proceso i se la pasa al i - 1 (sugerencia)
       } else {
-         sentido = +1;     // El proceso i se la pasa al i + 1
+         direction = +1;		// El proceso i se la pasa al i + 1
       }
    }
 
    srand(time(NULL));	// Coloca una semilla para los números aleatorios
-   int firstPlayer;
-   do {              // Escoge el proceso que comienza el juego, definiendo el tipo de mensaje
-      tipo = (random() % participantes) ;
-   } while ( 0 == tipo );
-   printf( "El jugador %d comienza el juego\n", tipo);
-   printf( "Creando una ronda de %d participantes\n", participantes );
-   for ( i = 1; i <= participantes; i++ ) {
+
+   struct message msg;
+   msg.mnums[0] = vi;
+   msg.mnums[1] = 0;
+   MailBox m;
+
+   printf( "Creando una ronda de %d jugadores\n", playerCount );
+
+   do {					// Escoge el proceso que comienza el juego, definiendo el tipo de mensaje
+      msg.mtype = (random() % playerCount) * 10;
+   } while ( 0 == msg.mtype );
+   printf( "El jugador %ld comienza el juego\n", msg.mtype / 10);
+   m.send( msg.mtype, &msg, sizeof( msg.mnums)*2 );
+
+   for (i = 1; i <= playerCount; i++ ) {
       if ( ! fork() ) {
-         persona( papaMail, playersleft, i , sentido, participantes);   // Este proceso simula una persona participante
+         persona(i* 10, direction, playerCount);	// Este proceso simula una persona participante
       }
    }
 
-   for ( i = 1; i <= participantes; i++ ) {
-      wait( &st );     // Esperar hasta que finalicen los procesos
+   for ( i = 1; i <= playerCount; i++ ) {
+      wait( &st );		// Esperar hasta que finalicen los procesos
    }
-// Elimina los recursos compartidos
+   // Elimina los recursos compartidos
    return 0;
 }
+

@@ -21,10 +21,9 @@
 #define MAXDATA 512 // maximum size of message data
 
 
-struct msgbuffer {
-   long type;	// this field must exist at first place
-   char data[ MAXDATA ];	// char array for simplicity
-   // user can define other fields
+struct message {
+   long mtype;
+   int mnums[2];
 };
 
 
@@ -82,19 +81,17 @@ int MailBox::send(long type, void* buffer, int numBytes) {
    int st = -1;
 
    // must declare a msgbuffer variable and set all the fields
-   struct msgbuffer m;
-   m.type = type;
-   memcpy((void*)m.data, buffer, numBytes);
+   struct message m;
+   m.mtype = type;
+   memcpy((void*)m.mnums, buffer, numBytes);
    // set other fields if necessary
 
    // use msgsnd system call to send message to a queue
-   st = msgsnd(this->id, (void *) &m, sizeof(m.data), 0);
-
+   st = msgsnd(this->id, (void *) &m, numBytes, 0);
    if (st == -1) {
       perror("MailBox error: send");
       exit(1);
    }
-
    return st;
 
 }
@@ -112,18 +109,17 @@ int MailBox::receive( long type, void * buffer, int capacity ) {
    int st = -1;
 
    // must declare a msgbuffer variable 
-   struct msgbuffer m;
+   struct message m;
 
    // use msgrcv system call to receive a message from the queue
    //  st = msgrcv( this->id, (void*) &m, sizeof(m.data), type, 0);
-   st = msgrcv( this->id, (void*) &m, capacity, type, 0);
+   st = msgrcv( this->id, &m, capacity, type, 0);
    if (st == -1) {
       perror("MailBox error: receive");
       exit(1);
    }
-   strcpy((char*)buffer, m.data);
+   memcpy(buffer, (void*)m.mnums, capacity);
 
    return st;
 
 }
-
