@@ -2,7 +2,7 @@
   *  C++ class to encapsulate Unix shared memory intrinsic structures and system calls
   *  Author: Operating systems (Francisco Arroyo)
   *  Version: 2023/Mar/15
-  *
+  * @copyright Copyright (c) 2023
   * Ref.: https://en.wikipedia.org/wiki/Shared_memory
   *
  **/
@@ -27,17 +27,16 @@
   *  ShMflg: IPC_CREAT | 0600
   *
  **/
-ShM::ShM( int size ) {
-   int st;
+ShM::ShM(int size) {
+  int st;
 
-   st = shmget( KEY, size, IPC_CREAT | 0600 );
-   if ( -1 == st ) {
-      perror( "ShM::ShM" );
-      exit( 1 );
-   }
+  st = shmget(KEY, size, IPC_CREAT | 0600);
+  if (-1 == st) {
+    perror("ShM::ShM");
+    exit(1);
+  }
 
-   this->id = st;
-
+  this->id = st;
 }
 
 
@@ -48,12 +47,12 @@ ShM::ShM( int size ) {
   *
  **/
 ShM::~ShM() {
-   int st;
-   st = shmctl( this->id, IPC_RMID, NULL );
-   if ( -1 == st ) {
-      perror( "ShM::~ShM" );
-      exit( 2 );
-   }
+  int st;
+  st = shmctl(this->id, IPC_RMID, NULL);
+  if (-1 == st) {
+    perror("ShM::~ShM");
+    exit(2);
+  }
 }
 
 
@@ -64,15 +63,13 @@ ShM::~ShM() {
   *
  **/
 void * ShM::attach() {
+  this->area = shmat(this->id, NULL, 0);
 
-   this->area = shmat( this->id, NULL, 0 );
-   if ( (void *) -1 == this->area ) {
-      perror( "ShM::attach" );
-      exit( 2 );
-   }
-   
-   return this->area;
-
+  if (reinterpret_cast<void *>(-1) == this->area) {
+    perror("ShM::attach");
+    exit(2);
+  }
+  return this->area;
 }
 
 
@@ -83,15 +80,13 @@ void * ShM::attach() {
   *
  **/
 int ShM::detach() {
-   int st = -1;
+  int st = -1;
+  st = shmdt(this->area);
 
-   st = shmdt( this->area );
-   if ( -1 == st ) {
-      perror( "ShM::detach" );
-      exit( 3 );
-   }
+  if (-1 == st) {
+    perror("ShM::detach");
+    exit(3);
+  }
 
-   return st;
-
+  return st;
 }
-
