@@ -11,15 +11,30 @@
  * Ref.: https://en.wikipedia.org/wiki/Shared_memory
  *
  **/
+# ifndef SHM_H
+# define SHM_H
+
+/**
+ * @brief Contains the message used by the program
+ * @struct msg_t
+ */
+typedef struct public_msg {
+  /// @brief potato's value
+  int potato;
+  /// @brief number of players
+  int playerCount;
+  /// @brief number of players out
+  int playersOut;
+}msg_t;
 
 class ShM {
  public:
   /**
    * @brief Construct a new ShM object
    * 
-   * @param int  Size of shared memory segment
+   * @param size  Size of shared memory area
    */
-  ShM(int = 0);  // Parameter represent segment size
+  ShM(int size);
 
   /**
    * @brief Destroy the ShM object
@@ -47,3 +62,5 @@ class ShM {
   /// @brief Pointer to shared memory area
   void * area;
 };
+
+# endif  // SHM_H

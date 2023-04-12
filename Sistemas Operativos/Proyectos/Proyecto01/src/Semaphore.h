@@ -10,6 +10,9 @@
  *
  **/
 
+#ifndef SEMAPHORE_H
+#define SEMAPHORE_H
+
 class Semaphore {
  public:
   /**
@@ -42,3 +45,14 @@ class Semaphore {
   /// @brief Semaphore indentifier
   int id;
 };
+
+/**
+ * @brief Contains the semaphores used by the program
+ * @struct sem_a_t
+ */
+typedef struct semaphores {
+  /// @brief semaphore to control the player turn
+  Semaphore* canPlay;
+}sem_a_t;
+
+#endif  // SEMAPHORE_H

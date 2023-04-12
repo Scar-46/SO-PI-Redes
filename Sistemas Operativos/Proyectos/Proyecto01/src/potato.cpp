@@ -18,105 +18,17 @@
 
 #include "Semaphore.h"  // Semaphore class
 #include "ShM.h"  // Shared memory class
-
-ShM shmem(1024);
+#include "Collatz.h"  // Collatz functions
 
 /**
- * @brief Contains the message used by the program
- * @struct msg_t
+ * @brief Main function
  */
-typedef struct public_msg {
-  /// @brief potato's value
-  int potato;
-  /// @brief number of players
-  int playerCount;
-  /// @brief number of players out
-  int playersOut;
-}msg_t;
-
-/**
- * @brief Contains the semaphores used by the program
- * @struct sem_a_t
- */
-typedef struct semaphores {
-  /// @brief semaphore to control the player turn
-  Semaphore* canPlay;
-}sem_a_t;
-
-/**
-  * Aplly the rules of the game to the potato value
-  * Simulates the rules of Collatz to the potato value
-  * @param potato potato value
-  * @return int new potato value
-  *
- **/
-int changePotato(int potato) {
-  if ( 1 == (potato & 0x1) ) {  // is the potato odd?
-    potato = (potato << 1) + potato + 1;  // p = p * 2 + p + 1 (p * 3 + 1)
-  } else {
-    potato >>= 1;  // potato = potato / 2, utilize the right shift operator
-  }
-
-  return potato;
-}
-
-/**
- *  @brief  Simulates a round of the game of hot potato
- *  Recives the semaphore vector, the id of the player and the direction of rotation
- * @param semsVector Semaphore vector
- * @param id buzon id
- * @param direction direction of rotation
- * @return int 0 if everything is ok
- *
- **/
-
-int person(std::vector<sem_a_t> semsVector, int id, int direction) {
-  bool out = false;
-  unsigned int seed = time(NULL);
-  msg_t* msgPublic = reinterpret_cast<msg_t*>(shmem.attach());
-  int next = ((id-1) + direction) % msgPublic->playerCount;
-  if (next < 0) {
-    next = msgPublic->playerCount - 1;
-  }
-  // while player is not out
-  while (true) {
-    semsVector[id-1].canPlay->Wait();
-    if (msgPublic->potato == -1) {
-      semsVector[next].canPlay->Signal();
-      break;
-    }
-    if (!out) {
-      // change potato
-      msgPublic->potato = changePotato(msgPublic->potato);
-      printf("El jugador %d tiene la papa %d\n", id, msgPublic->potato);
-      if (msgPublic->potato == 1) {
-        msgPublic->playersOut++;
-        out = true;
-        msgPublic->potato = 1 + rand_r(&seed) % 1000;
-        printf("El jugador %d se fue del juego\n", id);
-        printf("*Han salido %d jugadores de %d*\n", msgPublic->playersOut,
-        msgPublic->playerCount);
-      } else if (msgPublic->playersOut == msgPublic->playerCount -1) {
-        printf("El jugador %d es el ganador\n", id);
-        msgPublic->potato = -1;
-      }
-    }
-    semsVector[next].canPlay->Signal();
-  }
-  _exit(0);  // Everything OK
-}
-
-/**
- *
- *   Principal function
- *
- **/
 int main(int quantity, char ** values) {
   int i, st;
   msg_t* area;
   msg_t message;
-
-  int playerCount = 5;
+  ShM shmem(1024);
+  int playerCount = 100;
   int vi = 2023;
   int direction = 1;
   if (quantity > 1) {  // Define the number of participants
@@ -159,7 +71,7 @@ int main(int quantity, char ** values) {
   // Create the players processes
   for (i = 1; i <= playerCount; i++) {
     if (!fork()) {
-      person(semsVector, i, direction);  // Create the players processes
+      person(semsVector, i, direction, shmem);  // Call the player function
     }
   }
 
