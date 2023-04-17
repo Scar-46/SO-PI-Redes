@@ -2,9 +2,6 @@
  * @file Socket.cc
  * @copyright Copyright (c) 2023
  * @author Oscar Fernández Jiménez - oscar.fernandezjimenez@ucr.ac.cr
- * @author Omar Camacho Calvo - omar.camacho@ucr.ac.cr
- * @author Joseph Fernando Núñez Solano - joseph.nunezsolano@ucr.ac.cr
- * @author Pablo Rodríguez Navarro - pablo.rodrigueznavarro@ucr.ac.cr
  * @brief socket class
  * @version 0.1
  * @date 2023-04-04
