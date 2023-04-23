@@ -63,7 +63,7 @@ int main( int cuantos, char ** argumentos ) {
    server = new Socket( 's' );
    server->Bind( port );
    server->Listen( 10 );
-   server->SSLInitServer( "ci0123.pem", "ci0123.pem" );
+   server->SSLInitServer( "server-cert.pem" , "server-key.pem");
 
    for( ; ; ) {
       client = server->Accept();

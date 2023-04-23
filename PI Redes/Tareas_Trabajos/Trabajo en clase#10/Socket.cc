@@ -213,27 +213,32 @@ void Socket::SSLInitContext() {
   // We must create a method to define our context
   const SSL_METHOD * method = TLS_client_method();
   // Check for errors
+  if (NULL == method) {
+    perror("SSL_CTX");
+    exit(1);
+  }
+
   SSL_CTX * context = SSL_CTX_new(method);
-  OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
-  SSL_load_error_strings();  /* Bring in and register error messages */
   // Check for errors
-  this->SSLContext = reinterpret_cast<void *>(context);
-  if (NULL == this->SSLContext) {
+  if (NULL == context) {
     perror("SSL_CTX");
     exit(2);
   }
+
+  this->SSLContext = reinterpret_cast<void *>(context);
 }
 
 void Socket::SSLInit() {
   this->SSLInitContext();
-  // this-> context
+
   SSL * ssl = SSL_new(reinterpret_cast<SSL_CTX *>(this->SSLContext));
   // Check for errors
-  this->SSLStruct = reinterpret_cast<void *>(ssl);
   if (NULL == ssl) {
     perror("SSL_new");
     exit(3);
   }
+
+  this->SSLStruct = reinterpret_cast<void *>(ssl);
 }
 
 int Socket::SSLConnect(const char* host, int port) {
@@ -277,22 +282,22 @@ int Socket::SSLWrite(void * buffer, size_t bufferSize) {
 }
 
 void Socket::SSLoadCertificates(const char * certFileName, const char * keyFileName) {
-  // SSL_CTX * context = instance variable
   int st;
+  SSL_CTX * context = reinterpret_cast<SSL_CTX *>(this->SSLContext);
 
-  if (SSL_CTX_use_certificate_file(reinterpret_cast<SSL_CTX *>(this->SSLContext), certFileName, SSL_FILETYPE_PEM ) <= 0) {	 // set the local certificate from CertFile
+  if (SSL_CTX_use_certificate_file(context, certFileName, SSL_FILETYPE_PEM ) <= 0) {	 // set the local certificate from CertFile
     st = SSL_get_error( (SSL *) this->SSLStruct, st );
     ERR_print_errors_fp(stderr);
     abort();
   }
 
-  if ( SSL_CTX_use_PrivateKey_file(reinterpret_cast<SSL_CTX *>(this->SSLContext), keyFileName, SSL_FILETYPE_PEM ) <= 0) {	// set the private key from KeyFile (may be the same as CertFile)
+  if ( SSL_CTX_use_PrivateKey_file(context, keyFileName, SSL_FILETYPE_PEM ) <= 0) {	// set the private key from KeyFile (may be the same as CertFile)
     st = SSL_get_error((SSL *) this->SSLStruct, st);
     ERR_print_errors_fp(stderr);
     abort();
   }
 
-  if ( ! SSL_CTX_check_private_key(reinterpret_cast<SSL_CTX *>(this->SSLContext))) {	// verify private key
+  if ( ! SSL_CTX_check_private_key(context)) {	// verify private key
     st = SSL_get_error((SSL *) this->SSLStruct, st);
     ERR_print_errors_fp(stderr);
     abort();
@@ -300,15 +305,23 @@ void Socket::SSLoadCertificates(const char * certFileName, const char * keyFileN
 
 }
 void Socket::SSLInitServerContext() {
-  SSL_METHOD const *method = TLS_server_method();
-  SSL_CTX *context = SSL_CTX_new( method );   /* create new context from method */
+  SSL_library_init();
   OpenSSL_add_all_algorithms();  /* load & register all cryptos, etc. */
   SSL_load_error_strings();   /* load all error messages */
-  this->SSLContext = reinterpret_cast<void *>(context);
+
+  SSL_METHOD const *method = TLS_server_method();
+  if ( method == NULL ) {
+    ERR_print_errors_fp( stderr );
+    abort();
+  }
+
+  SSL_CTX *context = SSL_CTX_new( method );   /* create new context from method */
   if ( context == NULL ) {
     ERR_print_errors_fp( stderr );
     abort();
   }
+
+  this->SSLContext = reinterpret_cast<void *>(context);
 }
 
 void Socket::SSLInitServer( const char * certFileName, const char * keyFileName) {
@@ -350,9 +363,8 @@ void Socket::SSLShowCerts() {
 }
 
 void Socket::SSLCreate( Socket * original) {
-  SSL * ssl;
   int st;
-
+  SSL * ssl; 
   // Constructs a new SSL * variable using SSL_new() function
   ssl = SSL_new(reinterpret_cast<SSL_CTX *>(original->SSLContext));
   // Check for errors
@@ -361,10 +373,15 @@ void Socket::SSLCreate( Socket * original) {
     exit(3);
   }
   // Assign new variable to instance variable
+  this->SSLStruct = reinterpret_cast<void *>(ssl);
   // change conection status  to SSL using SSL_set_fd() function
-  SSL_set_fd(ssl, original->idSocket);
-  //    Servlet( ssl );         /* service connection */
+  st = SSL_set_fd(ssl, this->idSocket);
+  //  -----------------  Servlet( ssl );         /* service connection */
   // Check for errors 
+  if (st < 0) {
+    perror("SSL_set_fd");
+    exit(3);
+  }
   
 }
 
