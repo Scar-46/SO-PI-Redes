@@ -1,0 +1,10 @@
+bin/
+build/
+doc/
+html/
+latex/
+*.pyc
+*.o
+*.out
+.vscode
+.goutputstream-F2GI31
