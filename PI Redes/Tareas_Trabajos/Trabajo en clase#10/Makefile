@@ -23,11 +23,11 @@ $(info $$TARGETS = $(TARGETS))
 SSLClient.out: SSLClient.o Socket.o
 	$(CXX)  SSLClient.o Socket.o $(LDFLAGS) -o $@
 
-SSLServer.out: SSLServer.o Socket.o
-	$(CXX)  SSLServer.o Socket.o $(LDFLAGS) -o $@
+SSLServerThread.out: SSLServerThread.o Socket.o
+	$(CXX)  SSLServerThread.o Socket.o $(LDFLAGS) -o $@
 
-MirrorClientTest.out: MirrorClientTest.o Socket.o
-	$(CXX)  MirrorClientTest.o Socket.o $(LDFLAGS) -o $@
+SSLServerProcess.out: SSLServerProcess.o Socket.o
+	$(CXX)  SSLServerProcess.o Socket.o $(LDFLAGS) -o $@
 
 clean:
 	rm -f *.o *.out
