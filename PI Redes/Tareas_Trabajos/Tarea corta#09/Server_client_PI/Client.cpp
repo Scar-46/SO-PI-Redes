@@ -49,7 +49,7 @@ int main(int argc, char * argv[]) {
 
   // initialize de ssl en el socket
   s.Connect(os, 3141);
-  s.Write(reqOS, strlen(reqOS));
+  s.Write(reinterpret_cast<void *>(reqOS), strlen(reqOS));
 
   // TO-DO
   // check http-code for if/else in I/O response
@@ -62,11 +62,7 @@ int main(int argc, char * argv[]) {
   Parser p;
   while ((count = s.Read(a, SIZE)) > 0) {
     buffer += a;
-    while (true) {
-      pos = buffer.find('\n');
-      if (pos == std::string::npos) {
-        break;
-      }
+    while ((pos = buffer.find("\n")) != std::string::npos) {
       subBuffer = buffer.substr(0, pos);
       p.readLine(subBuffer);
       buffer.erase(0, pos + 2);
