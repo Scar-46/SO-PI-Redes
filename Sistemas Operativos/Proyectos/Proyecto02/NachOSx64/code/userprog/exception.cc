@@ -21,16 +21,36 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
-#include "NachosOpenFilesTable.h"
+#include "synch.h"
 
 #define BUFFERSIZE 1024
 #define ERROR -1
 
 Semaphore *console = new Semaphore("console", 1);
 
+void returnFromSystemCall() {
+
+   machine->WriteRegister( PrevPCReg, machine->ReadRegister( PCReg ) );		// PrevPC <- PC
+   machine->WriteRegister( PCReg, machine->ReadRegister( NextPCReg ) );			// PC <- NextPC
+   machine->WriteRegister( NextPCReg, machine->ReadRegister( NextPCReg ) + 4 );	// NextPC <- NextPC + 4
+
+}  // returnFromSystemCall
+
+void reading (char* buffer) {
+
+	int character = 1;
+	for (int i = 0; character != '\0'; ++i) {
+		machine->ReadMem(machine->ReadRegister(4) + i, 1, &character);
+		buffer[i] = (char) character;
+	}
+
+} // reading 
 
 /*
  *  System call interface: Halt()
@@ -47,6 +67,8 @@ void NachOS_Halt() {		// System call 0
  *  System call interface: void Exit( int )
  */
 void NachOS_Exit() {		// System call 1
+//DEbe liberar la memoria del proceso
+   int status = machine->ReadRegister(4);
 }
 
 
@@ -85,7 +107,7 @@ void NachOS_Open() {		// System call 5
       machine->WriteRegister(2, ERROR); // Return -1 if error
    } else {
       int idFileNachos = currentThread->openFilesTable->Open(idFileUnix);
-      machine->WriteRegister(2, id);
+      machine->WriteRegister(2, idFileNachos); // Return the file descriptor
    }
 
    returnFromSystemCall();
@@ -104,7 +126,7 @@ void NachOS_Write() {		// System call 6
    OpenFileId descriptor = machine->ReadRegister( 6 );	// Read file descriptor
 
 	// Need a semaphore to synchronize access to console
-	Console->P();
+	console->P();
 	switch ( descriptor ) {
 		case  ConsoleInput:	// User could not write to standard input
 			machine->WriteRegister( 2, -1 );
@@ -129,7 +151,7 @@ void NachOS_Write() {		// System call 6
 			break;
 
 	} // switch
-	Console->V();
+	console->V();
 
    returnFromSystemCall();		// Update the PC registers
 }  // NachOS_Write
@@ -138,15 +160,80 @@ void NachOS_Write() {		// System call 6
  *  System call interface: OpenFileId Read( char *, int, OpenFileId )
  */
 void NachOS_Read() {		// System call 7
-}
+   DEBUG('a', "Read from file, initiated by user program.\n");
+   char *buffer = NULL;
+   int size = machine->ReadRegister( 5 );	// Read size to write
+
+   // buffer = Read data from address given by user;
+   OpenFileId descriptor = machine->ReadRegister( 6 );	// Read file descriptor
+
+   // Need a semaphore to synchronize access to console
+   console->P();
+   switch ( descriptor ) {
+      case  ConsoleInput:	// User can read from standard input
+         buffer = new char[size];
+         size = read(0, buffer, size);
+         machine->WriteRegister( 2, size );
+         stats->numConsoleCharsRead += size;
+         break;
+      case  ConsoleOutput: // User could not read from standard output
+         machine->WriteRegister( 2, ERROR);
+      break;
+      case ConsoleError: 
+         printf( "ERROR: ConsoleError\n");
+         break;
+      default:	// All other read files
+         if (currentThread->openFilesTable->isOpened(descriptor)) {
+            int idFileUnix = currentThread->openFilesTable->getUnixHandle(descriptor);
+            int numRead = read(idFileUnix, buffer, size);
+            machine->WriteRegister(2, numRead);
+            bool flag;
+            for (int i = 0; i < numRead; ++i && flag) {
+               flag = machine->WriteMem(machine->ReadRegister(4) + i, 1, buffer[i]); //TODO: check if it is correct
+            }
+            stats->numDiskReads++;
+         } else {
+            machine->WriteRegister(2, ERROR);
+            printf("Unable to read file %d\n", descriptor);
+         }
+         break;
+   } // switch
+   console->V();
+
+   returnFromSystemCall();		// Update the PC registers
+   DEBUG('a', "Exit Read\n");
+}  // NachOS_Read
 
 
 /*
  *  System call interface: void Close( OpenFileId )
  */
 void NachOS_Close() {		// System call 8
+   DEBUG('a', "Close file, initiated by user program.\n");
+   OpenFileId idFileNachos = machine->ReadRegister(4);
+   if (currentThread->openFilesTable->isOpened(idFileNachos)) {
+      int idFileUnix = currentThread->openFilesTable->Close(idFileNachos);
+      close(idFileUnix);
+   } else {
+      printf("Unable to close file %d\n", idFileNachos);
+   }
 }
 
+void NachosForkThread( void * p ) { // for 64 bits version
+
+   AddrSpace *space;
+   space = currentThread->space;
+   space->InitRegisters();             // set the initial register values
+   space->RestoreState();              // load page table register
+
+   // Set the return address for this thread to the same as the main thread
+   // This will lead this thread to call the exit system call and finish
+   machine->WriteRegister( RetAddrReg, 4 );
+   machine->WriteRegister( PCReg, (long) p );
+   machine->WriteRegister( NextPCReg, (long) p + 4 );
+
+   machine->Run();                     // jump to the user progam
+} // NachosForkThread
 
 /*
  *  System call interface: void Fork( void (*func)() )
@@ -168,35 +255,22 @@ void NachOS_Fork() {		// System call 9
    // We (kernel)-Fork to a new method to execute the child code
 	// Pass the user routine address, now in register 4, as a parameter
 	// Note: in 64 bits register 4 need to be casted to (void *)
-	newT->Fork( NachosForkThread, machine->ReadRegister( 4 ) );
+   newT->Fork( NachosForkThread, (void *) machine->ReadRegister( 4 ) );
 
 	returnFromSystemCall();	// This adjust the PrevPC, PC, and NextPC registers
+   DEBUG( 'u', "Exiting Fork System call\n" );
 }  // NachOS_Fork
-
-void NachosForkThread( void * p ) { // for 64 bits version
-
-   AddrSpace *space;
-   space = currentThread->space;
-   space->InitRegisters();             // set the initial register values
-   space->RestoreState();              // load page table register
-
-   // Set the return address for this thread to the same as the main thread
-   // This will lead this thread to call the exit system call and finish
-   machine->WriteRegister( RetAddrReg, 4 );
-   machine->WriteRegister( PCReg, (long) p );
-   machine->WriteRegister( NextPCReg, (long) p + 4 );
-
-   machine->Run();                     // jump to the user progam
-   ASSERT(FALSE);
-
-} // NachosForkThread
-
 
 /*
  *  System call interface: void Yield()
  */
 void NachOS_Yield() {		// System call 10
-}
+   DEBUG( 'u', "Entering Yield System call\n" );
+   currentThread->Yield();
+
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting Yield System call\n" );
+} // NachOS_Yield
 
 
 /*
@@ -330,24 +404,6 @@ void NachOS_Accept() {		// System call 34
  */
 void NachOS_Shutdown() {	// System call 25
 }
-
-void returnFromSystemCall() {
-
-   machine->WriteRegister( PrevPCReg, machine->ReadRegister( PCReg ) );		// PrevPC <- PC
-   machine->WriteRegister( PCReg, machine->ReadRegister( NextPCReg ) );			// PC <- NextPC
-   machine->WriteRegister( NextPCReg, machine->ReadRegister( NextPCReg ) + 4 );	// NextPC <- NextPC + 4
-
-}  // returnFromSystemCall
-
-void reading (char* buffer) {
-
-	int character = 1;
-	for (int i = 0; character != '\0'; ++i) {
-		machine->ReadMem(machine->ReadRegister(4) + i, 1, &character);
-		buffer[i] = (char) character;
-	}
-
-} // reading 
 
 //----------------------------------------------------------------------
 // ExceptionHandler

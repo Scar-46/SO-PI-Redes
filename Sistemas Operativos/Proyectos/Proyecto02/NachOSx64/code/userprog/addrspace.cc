@@ -75,7 +75,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    ASSERT(numPages <= NumPhysPages);		// check we're not trying
+    ASSERT(numPages <= (unsigned) MyMap->NumClear());		// check we're not trying
 						// to run anything too big --
 						// at least until we have
 						// virtual memory
@@ -86,7 +86,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
 	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	pageTable[i].physicalPage = Mymap->Find(); // find a free physical page
+	pageTable[i].physicalPage = MyMap->Find(); // find a free physical page
 	pageTable[i].valid = true;
 	pageTable[i].use = false;
 	pageTable[i].dirty = false;
@@ -95,9 +95,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 					// pages to be read-only
     }
     
-// zero out the entire address space, to zero the unitialized data segment 
-// and the stack segment
-    //bzero(machine->mainMemory, size);
+// Gets the number of pages in the code segment and the data segment
 	int codeSegmentSize = divRoundUp(noffH.code.size, PageSize);
 	int dataSegmentSize = divRoundUp(noffH.initData.size, PageSize);
 // then, copy in the code and data segments into memory
@@ -128,7 +126,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 AddrSpace::AddrSpace (AddrSpace* fatherSpace) {
 	int stackSize = divRoundUp (UserStackSize, PageSize);
 	numPages = fatherSpace->numPages;
-	ASSERT (numPages <= (unsigned int) Mymap->NumClear()); // Check if there is enough space for the new process
+	ASSERT (numPages <= (unsigned int) MyMap->NumClear()); // Check if there is enough space for the new process
 
 	pageTable = new TranslationEntry[numPages];
 	for (unsigned int i = 0; i < numPages; ++i) {
@@ -137,7 +135,7 @@ AddrSpace::AddrSpace (AddrSpace* fatherSpace) {
 			pageTable[i].physicalPage = fatherSpace->pageTable[i].physicalPage; // father and child share the same physical page
 		}
 		else {
-			pageTable[i].physicalPage = Mymap->Find(); // find a free physical page
+			pageTable[i].physicalPage = MyMap->Find(); // find a free physical page
 			bzero (& (machine->mainMemory[pageTable[i].physicalPage * PageSize]), PageSize);
 		}
 		pageTable[i].valid = true;
