@@ -19,6 +19,7 @@ class NachosOpenFilesTable {
     int getUnixHandle( int NachosHandle );
     void addThread();							// If a user thread is using this table, add it
     void delThread();							// If a user thread is using this table, delete it
+    int getUsage();								// Return the number of threads using this table
 
     void Print();								// Print contents
     

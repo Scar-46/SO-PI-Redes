@@ -49,6 +49,10 @@ void NachosOpenFilesTable::delThread() {
     this->usage--;  // Subtract 1 to the usage
 }
 
+int NachosOpenFilesTable::getUsage() {
+    return this->usage;  // Return the usage
+}
+
 void NachosOpenFilesTable::Print() {
     printf("NachosOpenFilesTable contents:\n");
     printf("Usage: %d\n", this->usage);

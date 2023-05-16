@@ -95,9 +95,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 					// pages to be read-only
     }
     
-// Gets the number of pages in the code segment and the data segment
-	int codeSegmentSize = divRoundUp(noffH.code.size, PageSize);
-	int dataSegmentSize = divRoundUp(noffH.initData.size, PageSize);
+	unsigned int codeSegmentSize = divRoundUp(noffH.code.size, PageSize);
 // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) { 
 		DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
@@ -107,6 +105,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 			executable->ReadAt(&(machine->mainMemory[pageFrame * PageSize]), PageSize, (noffH.code.inFileAddr + i * PageSize));
 		}
     }
+	unsigned int dataSegmentSize = divRoundUp(noffH.initData.size, PageSize);
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
 		// executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]), noffH.initData.size, noffH.initData.inFileAddr);
