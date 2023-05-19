@@ -35,6 +35,9 @@ const unsigned STACK_FENCEPOST = 0xdeadbeef;
 Thread::Thread(const char* threadName)
 {
     name = threadName;
+    openFilesTable = new NachosOpenFilesTable();
+    childThreadsTable = new NachosOpenFilesTable();
+
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;

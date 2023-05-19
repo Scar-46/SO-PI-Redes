@@ -4,13 +4,23 @@
 
 NachosOpenFilesTable::NachosOpenFilesTable() {
     openFiles = new int[VECTOR_SIZE];  // A vector with user opened files
-    openFilesMap = new BitMap(VECTOR_SIZE); // A bitmap to control our vector
+    openFiles[0] = 0;  // stdin
+    openFiles[1] = 1;  // stdout
+    openFiles[2] = 2;  // stderr
+
+    openFilesMap = new BitMap(VECTOR_SIZE); // A bitmap to control our vector]
+    openFilesMap->Mark(0);  // stdin
+    openFilesMap->Mark(1);  // stdout
+    openFilesMap->Mark(2);  // stderr
     this->usage = 0;  // How many threads are using this table
+
 }
 
 NachosOpenFilesTable::~NachosOpenFilesTable() {
-    delete openFiles;  // De-allocate openFiles
-    delete openFilesMap; // De-allocate openFilesMap
+    if (this->usage == 0) {  // If there are no threads using this table
+        delete openFiles;  // Delete the vector
+        delete openFilesMap;  // Delete the bitmap
+    }
 }
 
 int NachosOpenFilesTable::Open(int UnixHandle) {

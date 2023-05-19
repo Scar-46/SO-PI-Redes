@@ -96,7 +96,7 @@ Initialize(int argc, char **argv)
     
 #ifdef USER_PROGRAM
     bool debugUserProg = false;	// single step user program
-    Mymap = new BitMap(NumPhysPages);
+    MyMap = new BitMap(NumPhysPages);
 #endif
 #ifdef FILESYS_NEEDED
     bool format = false;	// format disk
@@ -214,6 +214,7 @@ Cleanup()
     
 #ifdef USER_PROGRAM
     delete machine;
+    delete MyMap;
 #endif
 
 #ifdef FILESYS_NEEDED

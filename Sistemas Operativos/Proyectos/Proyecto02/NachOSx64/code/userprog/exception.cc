@@ -91,8 +91,7 @@ void NachOS_Exit() {		// System call 1
 
 
 void execAux (void* executableName) {
-	OpenFile* executable = (OpenFile*) executableName;
-
+	OpenFile *executable = (OpenFile *) executableName;
 	if (executable == NULL) {
 		printf ("Unable to open file");
 		return;
@@ -112,15 +111,14 @@ void NachOS_Exec() {		// System call 2
    DEBUG('a', "Exec, initiated by user program.\n");
    char buffer[BUFFERSIZE];
    reading (buffer);
-
    OpenFile *executable = fileSystem->Open(buffer);
    if (executable == NULL) {
       printf("Unable to open file %s\n", buffer);
       machine->WriteRegister(2, ERROR); // Return -1 if error
-   } else {
-      Thread *newThread = new Thread("new thread");
-      newThread->Fork(execAux, (void *) executable);
    }
+   Thread *newThread = new Thread("new thread");
+   newThread->Fork(execAux, (void *) executable);
+
    returnFromSystemCall();
    DEBUG('a', "Finishing Exec.\n");
 } // NachOS_Exec
@@ -132,18 +130,12 @@ void NachOS_Exec() {		// System call 2
 void NachOS_Join() {		// System call 3
    DEBUG('a', "Join, initiated by user program.\n");
    int idThread = machine->ReadRegister(4);
-   Semaphore* semaphore = new Semaphore("semaphore", 0);
-   currentThread->semaphoresTable->addThread();
-   
-   if (currentThread->semaphoresTable->getUnixHandle(idThread) == ERROR) {
-      printf("Unable to join thread %d\n", idThread);
+   Thread *thread = (Thread *) currentThread->space->getUnixHandle(idThread);
+   if (thread == NULL) {
+      printf("Unable to find thread %d\n", idThread);
       machine->WriteRegister(2, ERROR); // Return -1 if error
-   } else {
-      machine->WriteRegister(2, 0); // Return 0 if success
    }
-   semaphore->P();
-   returnFromSystemCall();
-   DEBUG('a', "Finishing Join.\n");
+   if (thread->ThreadF
 }
 
 
@@ -177,6 +169,7 @@ void NachOS_Open() {		// System call 5
    reading (buffer);
    
    int idFileUnix = open(buffer, O_RDWR); // O_RDWR: Open for reading and writing. The file is created if it does not exist.
+
    if (idFileUnix == ERROR) {
       printf("Unable to open file %s\n", buffer);
       machine->WriteRegister(2, ERROR); // Return -1 if error
@@ -184,7 +177,7 @@ void NachOS_Open() {		// System call 5
       int idFileNachos = currentThread->openFilesTable->Open(idFileUnix);
       machine->WriteRegister(2, idFileNachos); // Return the file descriptor
    }
-
+   DEBUG('a', "Finishing Open.\n");
    returnFromSystemCall();
 }  // NachOS_Open
 
@@ -198,8 +191,8 @@ void NachOS_Write() {		// System call 6
    int size = machine->ReadRegister( 5 );	// Read size to write
 
    // buffer = Read data from address given by user;
+   reading (buffer);
    OpenFileId descriptor = machine->ReadRegister( 6 );	// Read file descriptor
-
 	// Need a semaphore to synchronize access to console
 	console->P();
 	switch ( descriptor ) {
@@ -207,12 +200,12 @@ void NachOS_Write() {		// System call 6
 			machine->WriteRegister( 2, ERROR);
 			break;
 		case  ConsoleOutput:
-            DEBUG('a', "Finishing Write.\n");
+		   buffer[ size ] = 0;
+			printf( "%s", buffer );
+         stats->numConsoleCharsWritten += size;
 		break;
 		case ConsoleError:	// This trick permits to write integers to console
-         buffer[ size ] = '\0';
-			stats->numConsoleCharsWritten += size;
-			write (1, buffer, size); 
+         printf( "%d\n", machine->ReadRegister( 4 ) );
 			break;
 		default:	// All other opened files
          if (currentThread->openFilesTable->isOpened(descriptor)) {
@@ -238,12 +231,12 @@ void NachOS_Write() {		// System call 6
 void NachOS_Read() {		// System call 7
    DEBUG('a', "Read from file, initiated by user program.\n");
    char buffer[BUFFERSIZE];
-   int size = machine->ReadRegister( 5 );	// Read size to write
+   int size = machine->ReadRegister( 5 );	// Read size to read
    int numRead = 0;  // Number of chars read
 
    // buffer = Read data from address given by user;
-   OpenFileId descriptor = machine->ReadRegister( 6 );	// Read file descriptor
 
+   OpenFileId descriptor = machine->ReadRegister( 6 );	// Read file descriptor
    // Need a semaphore to synchronize access to console
    console->P();
    switch ( descriptor ) {
@@ -253,6 +246,7 @@ void NachOS_Read() {		// System call 7
          stats->numConsoleCharsRead += numRead;
          break;
       case  ConsoleOutput: // User could not read from standard output
+         printf( "ERROR: ConsoleOutput\n");
          machine->WriteRegister( 2, ERROR);
       break;
       case ConsoleError: 
@@ -275,9 +269,8 @@ void NachOS_Read() {		// System call 7
          break;
    } // switch
    console->V();
-
-   returnFromSystemCall();		// Update the PC registers
    DEBUG('a', "Exit Read\n");
+   returnFromSystemCall();		// Update the PC registers
 }  // NachOS_Read
 
 
