@@ -24,7 +24,6 @@ void Monitor::crossRope(int ropeNumber) {
     std::unique_lock<std::mutex> lck(this->mtx);
     this->baboonsPerRope[ropeNumber]++;
     this->totalBaboons++;
-    std::cout << "Baboons total: " << this->totalBaboons << std::endl;
     int maxBaboons = 0;
     int maxRope = 0;
     if(this->totalBaboons >= this->safeNumberOfBaboons) {
@@ -34,31 +33,21 @@ void Monitor::crossRope(int ropeNumber) {
                 maxRope = i;
             }
         }
-        std::cout << "Total baboons: " << this->totalBaboons << std::endl;
+        std::cout << "* Total baboons: " << this->totalBaboons <<" *"<< std::endl;
         std::cout << "Baboons are going to cross rope " << maxRope << std::endl;
         std::cout << "Baboons in rope " << maxRope << ": " << maxBaboons << std::endl;
         baboonsCrossed = maxBaboons;
         this->rope[maxRope].notify_one();
-        this->rope[ropeNumber].wait(lck);
-        std::cout << "--> Baboon crossed rope " << ropeNumber << std::endl;
-        baboonsCrossed--;
-        this->baboonsPerRope[ropeNumber]--;
-        this->totalBaboons--;
-        if (baboonsCrossed > 0) {
-            this->rope[ropeNumber].notify_one();
-        } else {
-            std::cout << "All baboons crossed rope Above" << ropeNumber << std::endl;
-        }
-    } else {
-        this->rope[ropeNumber].wait(lck);
-        std::cout << "--> Baboon crossed rope " << ropeNumber << std::endl;
-        baboonsCrossed--;
-        this->baboonsPerRope[ropeNumber]--;
-        this->totalBaboons--;
-        if (baboonsCrossed > 0) {
-            this->rope[ropeNumber].notify_one();
-        } else {
-            std::cout << "All baboons crossed rope " << ropeNumber << std::endl;
-        }
     }
+    this->rope[ropeNumber].wait(lck);
+    std::cout << "--> Baboon crossed rope " << ropeNumber << std::endl;
+    baboonsCrossed--;
+    this->baboonsPerRope[ropeNumber]--;
+    this->totalBaboons--;
+    if (baboonsCrossed > 0) {
+        this->rope[ropeNumber].notify_one();
+    } else {
+        std::cout << "All baboons crossed rope " << ropeNumber << std::endl;
+    }
+    //Se queda pegado en el wait por queda un numero de babuinos inferior al minimo para cruzar
 }

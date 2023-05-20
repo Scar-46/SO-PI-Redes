@@ -17,8 +17,8 @@
 
 #include "Monitor.h"
 
-#define ROPE_COUNT 3
-#define SAFE_NUMBER_OF_BABOONS 5
+#define ROPE_COUNT 4
+#define SAFE_NUMBER_OF_BABOONS 4
 
 int main(int argc, char const *argv[]) {
     Monitor monitor(ROPE_COUNT,SAFE_NUMBER_OF_BABOONS);
