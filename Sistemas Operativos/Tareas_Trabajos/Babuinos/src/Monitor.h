@@ -20,6 +20,7 @@ class Monitor {
         std::mutex mtx;
         std::vector<std::condition_variable> rope;
         std::vector<int> baboonsPerRope;
+        std::vector<bool> ropeInUse;  //Only for closing the program
         int ropeCount;
         int safeNumberOfBaboons;
         int totalBaboons;

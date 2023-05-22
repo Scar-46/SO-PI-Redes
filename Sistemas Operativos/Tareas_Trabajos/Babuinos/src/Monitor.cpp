@@ -13,6 +13,7 @@ Monitor::Monitor(int ropeCount,int safeNumberOfBaboons) {
     this->baboonsCrossed = 0;
     this->baboonsPerRope = std::vector<int>(ropeCount,0);
     this->rope = std::vector<std::condition_variable>(ropeCount);
+    this->ropeInUse = std::vector<bool>(ropeCount,false);
 }
 
 Monitor::~Monitor() {
@@ -37,17 +38,21 @@ void Monitor::crossRope(int ropeNumber) {
         std::cout << "Baboons are going to cross rope " << maxRope << std::endl;
         std::cout << "Baboons in rope " << maxRope << ": " << maxBaboons << std::endl;
         baboonsCrossed = maxBaboons;
+        this->ropeInUse[maxRope] = true;
         this->rope[maxRope].notify_one();
     }
-    this->rope[ropeNumber].wait(lck);
-    std::cout << "--> Baboon crossed rope " << ropeNumber << std::endl;
-    baboonsCrossed--;
-    this->baboonsPerRope[ropeNumber]--;
-    this->totalBaboons--;
-    if (baboonsCrossed > 0) {
-        this->rope[ropeNumber].notify_one();
-    } else {
-        std::cout << "All baboons crossed rope " << ropeNumber << std::endl;
+    this->rope[ropeNumber].wait_for(lck,std::chrono::milliseconds(10000));
+    if (this->ropeInUse[ropeNumber]) {  // This is for closing the program only
+        std::cout << "--> Baboon crossed rope " << ropeNumber << std::endl;
+        baboonsCrossed--;
+        this->baboonsPerRope[ropeNumber]--;
+        this->totalBaboons--;
+        if (baboonsCrossed > 0) {
+            this->rope[ropeNumber].notify_one();
+        } else {
+            std::cout << "All baboons crossed rope " << ropeNumber << std::endl;
+            this->ropeInUse[ropeNumber] = false;
+        }
     }
-    //Se queda pegado en el wait por queda un numero de babuinos inferior al minimo para cruzar
+
 }
