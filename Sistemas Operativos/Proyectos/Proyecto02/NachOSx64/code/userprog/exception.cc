@@ -28,11 +28,14 @@
 #include "system.h"
 #include "syscall.h"
 #include "synch.h"
+//#include "bitmap.h"
 
 #define BUFFERSIZE 1024
 #define ERROR -1
 
 Semaphore *console = new Semaphore("console", 1);
+Semaphore * semArray[10];
+//BitMap * semsBitMap = new BitMap(10);
 
 void returnFromSystemCall() {
 
@@ -69,38 +72,38 @@ void NachOS_Halt() {		// System call 0
 void NachOS_Exit() {		// System call 1
    DEBUG('a', "Exit, initiated by user program.\n");
    int status = machine->ReadRegister(4);
-   currentThread->Yield();
-   currentThread->openFilesTable->delThread();
    if (currentThread->openFilesTable->getUsage() == 0) {
       NachOS_Halt();
    }
+   currentThread->openFilesTable->delThread();
    if (currentThread->space != NULL) {
       delete currentThread->space;
       currentThread->space = NULL;
    }
-   
-   while (currentThread->semaphoresTable->getUsage() != 0) {
-      Semaphore *semaphore = (Semaphore*) currentThread->semaphoresTable->getUnixHandle(status);
-      currentThread->semaphoresTable->delThread();
-      semaphore->V();
+   if (currentThread->joinSem != nullptr) {
+      currentThread->joinSem->V();
    }
    currentThread->Finish();
+   machine->WriteRegister(2, status);
    returnFromSystemCall();
-   DEBUG('a', "Finishing Exit.\n");
+   DEBUG('a', "Exiting exit.\n");
+   
 } // NachOS_Exit
 
 
 void execAux (void* executableName) {
+   DEBUG('a', "Exec aux, initiated by user program.\n");
 	OpenFile *executable = (OpenFile *) executableName;
 	if (executable == NULL) {
 		printf ("Unable to open file");
 		return;
 	}
-
 	currentThread->space = new AddrSpace (executable); // create a new address space
 	currentThread->space->InitRegisters(); // set the initial register values
 	currentThread->space->RestoreState();  // load page table register
 	machine->Run(); // jump to the user progam
+   ASSERT(false); // machine->Run never returns;
+   DEBUG('a', "Finishing Exec aux.\n");
 }
 
 
@@ -110,15 +113,20 @@ void execAux (void* executableName) {
 void NachOS_Exec() {		// System call 2
    DEBUG('a', "Exec, initiated by user program.\n");
    char buffer[BUFFERSIZE];
+   int threadID;
    reading (buffer);
    OpenFile *executable = fileSystem->Open(buffer);
+   printf("Opening file %s\n", buffer);
    if (executable == NULL) {
-      printf("Unable to open file %s\n", buffer);
+      printf ("Unable to open file");
       machine->WriteRegister(2, ERROR); // Return -1 if error
+      delete executable;
+   } else {
+      Thread *thread = new Thread("Exec Thread");
+      threadID = currentThread->processTable->addThread(thread);
+      thread->Fork(execAux, (void *) executable);
+      machine->WriteRegister(2, threadID); // Return the thread ID
    }
-   Thread *newThread = new Thread("new thread");
-   newThread->Fork(execAux, (void *) executable);
-
    returnFromSystemCall();
    DEBUG('a', "Finishing Exec.\n");
 } // NachOS_Exec
@@ -130,12 +138,17 @@ void NachOS_Exec() {		// System call 2
 void NachOS_Join() {		// System call 3
    DEBUG('a', "Join, initiated by user program.\n");
    int idThread = machine->ReadRegister(4);
-   Thread *thread = (Thread *) currentThread->space->getUnixHandle(idThread);
+   Thread *thread = (Thread *) currentThread->processTable->getchildThread(idThread);
    if (thread == NULL) {
       printf("Unable to find thread %d\n", idThread);
       machine->WriteRegister(2, ERROR); // Return -1 if error
+   } else {
+      Semaphore *sem = new Semaphore("sem", 0);
+      thread->joinSem = sem;
+      sem->P();
    }
-   if (thread->ThreadF
+   returnFromSystemCall();
+   DEBUG('a', "Finishing Join.\n");
 }
 
 
@@ -311,6 +324,7 @@ void NachosForkThread( void * p ) { // for 64 bits version
  *  System call interface: void Fork( void (*func)() )
  */
 void NachOS_Fork() {		// System call 9
+printf("Fork\n");
    DEBUG( 'u', "Entering Fork System call\n" );
    // We need to create a new kernel thread to execute the user thread
 	Thread * newT = new Thread( "child to execute Fork code" );
@@ -347,6 +361,16 @@ void NachOS_Yield() {		// System call 10
  *  System call interface: Sem_t SemCreate( int )
  */
 void NachOS_SemCreate() {		// System call 11
+   DEBUG( 'u', "Entering SemCreate System call\n" );
+   int initValue = machine->ReadRegister( 4 );
+   Semaphore * newSem = new Semaphore( "new semaphore", initValue );
+   //int semId = semsBitMap->Find();
+   //if ( semId != ERROR ) {
+   //   semArray[ semId ] = newSem;
+   //}
+   //machine->WriteRegister( 2, semId );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting SemCreate System call\n" );
 }
 
 
@@ -354,6 +378,20 @@ void NachOS_SemCreate() {		// System call 11
  *  System call interface: int SemDestroy( Sem_t )
  */
 void NachOS_SemDestroy() {		// System call 12
+   DEBUG( 'u', "Entering SemDestroy System call\n" );
+   int semId = machine->ReadRegister( 4 );
+   int status = ERROR;
+   /*
+   if ( semsBitMap->Test( semId ) ) {
+      semsBitMap->Clear( semId );
+      delete semArray[ semId ];
+      semArray[ semId ] = NULL;
+      status = 0;
+   }
+   */
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting SemDestroy System call\n" );
 }
 
 
@@ -361,6 +399,17 @@ void NachOS_SemDestroy() {		// System call 12
  *  System call interface: int SemSignal( Sem_t )
  */
 void NachOS_SemSignal() {		// System call 13
+   DEBUG( 'u', "Entering SemSignal System call\n" );
+   int semId = machine->ReadRegister( 4 );
+   int status = ERROR;
+   /*
+   if ( semsBitMap->Test( semId ) ) {
+      semArray[ semId ]->V();
+      status = 0;
+   }*/
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting SemSignal System call\n" );
 }
 
 
@@ -368,6 +417,17 @@ void NachOS_SemSignal() {		// System call 13
  *  System call interface: int SemWait( Sem_t )
  */
 void NachOS_SemWait() {		// System call 14
+   DEBUG( 'u', "Entering SemWait System call\n" );
+   int semId = machine->ReadRegister( 4 );
+   int status = ERROR;
+   /*
+   if ( semsBitMap->Test( semId ) ) {
+      semArray[ semId ]->P();
+      status = 0;
+   }*/
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting SemWait System call\n" );
 }
 
 
@@ -375,6 +435,7 @@ void NachOS_SemWait() {		// System call 14
  *  System call interface: Lock_t LockCreate( int )
  */
 void NachOS_LockCreate() {		// System call 15
+
 }
 
 

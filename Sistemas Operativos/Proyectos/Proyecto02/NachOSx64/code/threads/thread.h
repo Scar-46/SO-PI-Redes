@@ -39,12 +39,16 @@
 
 #include "copyright.h"
 #include "utility.h"
+#include "NachosOpenFilesTable.h"
+#include "bitmap.h"
+#include "ProcessTable.h"
 
 #ifdef USER_PROGRAM
 #include "machine.h"
 #include "addrspace.h"
-#include "NachosOpenFilesTable.h"
 #endif
+
+class Semaphore; // forward declaration to avoid circular dependencies
 
 // CPU register state to be saved on context switch.  
 // x86 processors needs 9 32-bit registers, whereas x64 has 8 extra registers
@@ -81,10 +85,11 @@ class Thread {
   public:
 
     NachosOpenFilesTable* openFilesTable;	// Table of openfiles
-    NachosOpenFilesTable* semaphoresTable;	// Table of semaphores
-    NachosOpenFilesTable* processesTable;	// Table of processes
+    ProcessTable* processTable;		// Table of processes
+    Semaphore* joinSem;            // Semaphore for join
 
     Thread(const char* debugName);	// initialize a Thread 
+    Thread(); 				// initialize a Thread
     ~Thread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted
 					// must not be running when delete 

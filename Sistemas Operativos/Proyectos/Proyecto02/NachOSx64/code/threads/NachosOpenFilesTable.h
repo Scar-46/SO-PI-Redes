@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include "bitmap.h"
 
+#ifndef NACHOS_OPEN_FILES_TABLE
+
 class NachosOpenFilesTable {
   public:
     NachosOpenFilesTable();						// Initialize
@@ -20,12 +22,15 @@ class NachosOpenFilesTable {
     void addThread();							// If a user thread is using this table, add it
     void delThread();							// If a user thread is using this table, delete it
     int getUsage();								// Return the number of threads using this table
-
+    
     void Print();								// Print contents
     
   private:
     int * openFiles;							// A vector with user opened files
     BitMap * openFilesMap;						// A bitmap to control our vector
+
     int usage;									// How many threads are using this table
 
 };
+
+#endif // NACHOS_OPEN_FILES_TABLE

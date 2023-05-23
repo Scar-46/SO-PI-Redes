@@ -81,6 +81,8 @@ class Lock {
 
   private:
     char* name;				// for debugging
+    Semaphore* sem;   // semaphore to implement lock
+    Thread* owner;	  // thread that acquired the lock
     // plus some other stuff you'll need to define
 };
 
@@ -133,6 +135,7 @@ class Condition {
 
   private:
     char* name;
+    Semaphore* sem;   // semaphore to implement condition variable
     // plus some other stuff you'll need to define
 };
 
@@ -147,6 +150,7 @@ class Mutex {
       void Unlock();
    private:
       char * name;
+      Semaphore * sem;
       // plus some other stuff you'll need to define
 };
 
@@ -160,6 +164,9 @@ class Barrier {
       void Wait();
    private:
       char * name;
+      Semaphore * sem;
+      Mutex * mutex;
+      int threadCount;
       // plus some other stuff you'll need to define
 };
 

@@ -123,79 +123,112 @@ Semaphore::Destroy()
 // Note -- without a correct implementation of Condition::Wait(), 
 // the test case in the network assignment won't work!
 Lock::Lock(const char* debugName) {
-
+    name = (char *)debugName;
+    owner = NULL;
+    sem = new Semaphore(debugName, 1);
 }
 
 
 Lock::~Lock() {
-
+    delete sem;
 }
 
 
 void Lock::Acquire() {
-
+    sem->P();
+    owner = currentThread;
 }
 
 
 void Lock::Release() {
-
+    if (isHeldByCurrentThread()) {
+        sem->V();
+        owner = NULL;
+    }
 }
 
 
 bool Lock::isHeldByCurrentThread() {
-   return false;
+    if (owner == currentThread)
+        return true;
+    else{
+        return false;
+    }
 }
 
 
 Condition::Condition(const char* debugName) {
-
+    name = (char *)debugName;
+    sem = new Semaphore(debugName, 0);
 }
 
 
 Condition::~Condition() {
-
+    delete sem;
 }
 
 
 void Condition::Wait( Lock * conditionLock ) {
-
+    conditionLock->Release();
+    sem->P();
+    conditionLock->Acquire();
 }
 
 
 void Condition::Signal( Lock * conditionLock ) {
-
+    sem->V();
 }
 
 
 void Condition::Broadcast( Lock * conditionLock ) {
+    while (sem->getValue() <= 0) {
+        sem->V();
+    }
 }
 
 
 // Mutex class
 Mutex::Mutex( const char * debugName ) {
-
+    name = (char *)debugName;
+    sem = new Semaphore(debugName, 1);
 }
 
 Mutex::~Mutex() {
-
+    delete sem;
 }
 
 void Mutex::Lock() {
-
+    sem->P();
 }
 
 void Mutex::Unlock() {
-
+    sem->V();
 }
 
 
 // Barrier class
 Barrier::Barrier( const char * debugName, int count ) {
+    if (count > 0) {
+        name = (char *)debugName;
+        sem = new Semaphore(debugName, 0);
+        mutex = new Mutex(debugName);
+        this->threadCount = count;
+    }
 }
 
 Barrier::~Barrier() {
+    delete sem;
+    delete mutex;
 }
 
 void Barrier::Wait() {
+    mutex->Lock();
+    threadCount--;
+    if (threadCount == 0) {
+        sem->V();
+    }
+    mutex->Unlock();
+    sem->P();
+    sem->V();
 }
 
