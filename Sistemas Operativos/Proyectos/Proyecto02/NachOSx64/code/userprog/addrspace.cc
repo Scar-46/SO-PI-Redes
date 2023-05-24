@@ -151,6 +151,9 @@ AddrSpace::AddrSpace (AddrSpace* fatherSpace) {
 
 AddrSpace::~AddrSpace()
 {
+	for (unsigned int i = 0; i < numPages; ++i) {
+		MyMap->Clear(pageTable[i].physicalPage);
+	}
    delete pageTable;
 }
 

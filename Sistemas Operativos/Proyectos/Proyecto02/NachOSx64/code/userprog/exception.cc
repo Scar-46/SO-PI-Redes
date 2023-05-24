@@ -324,7 +324,6 @@ void NachosForkThread( void * p ) { // for 64 bits version
  *  System call interface: void Fork( void (*func)() )
  */
 void NachOS_Fork() {		// System call 9
-printf("Fork\n");
    DEBUG( 'u', "Entering Fork System call\n" );
    // We need to create a new kernel thread to execute the user thread
 	Thread * newT = new Thread( "child to execute Fork code" );
