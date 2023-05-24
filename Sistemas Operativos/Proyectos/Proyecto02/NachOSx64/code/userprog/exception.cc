@@ -28,14 +28,18 @@
 #include "system.h"
 #include "syscall.h"
 #include "synch.h"
-//#include "bitmap.h"
+#include "bitmap.h"
 
 #define BUFFERSIZE 1024
 #define ERROR -1
 
 Semaphore *console = new Semaphore("console", 1);
 Semaphore * semArray[10];
-//BitMap * semsBitMap = new BitMap(10);
+Lock * lockArray[10];
+Condition * condArray[10];
+BitMap * semsBitMap = new BitMap(10);
+BitMap * locksBitMap = new BitMap(10);
+BitMap * condsBitMap = new BitMap(10);
 
 void returnFromSystemCall() {
 
@@ -363,11 +367,11 @@ void NachOS_SemCreate() {		// System call 11
    DEBUG( 'u', "Entering SemCreate System call\n" );
    int initValue = machine->ReadRegister( 4 );
    Semaphore * newSem = new Semaphore( "new semaphore", initValue );
-   //int semId = semsBitMap->Find();
-   //if ( semId != ERROR ) {
-   //   semArray[ semId ] = newSem;
-   //}
-   //machine->WriteRegister( 2, semId );
+   int semId = semsBitMap->Find();
+   if ( semId != ERROR ) {
+      semArray[ semId ] = newSem;
+   }
+   machine->WriteRegister( 2, semId );
    returnFromSystemCall();
    DEBUG( 'u', "Exiting SemCreate System call\n" );
 }
@@ -380,14 +384,11 @@ void NachOS_SemDestroy() {		// System call 12
    DEBUG( 'u', "Entering SemDestroy System call\n" );
    int semId = machine->ReadRegister( 4 );
    int status = ERROR;
-   /*
    if ( semsBitMap->Test( semId ) ) {
+      status = 0;
       semsBitMap->Clear( semId );
       delete semArray[ semId ];
-      semArray[ semId ] = NULL;
-      status = 0;
    }
-   */
    machine->WriteRegister( 2, status );
    returnFromSystemCall();
    DEBUG( 'u', "Exiting SemDestroy System call\n" );
@@ -401,11 +402,10 @@ void NachOS_SemSignal() {		// System call 13
    DEBUG( 'u', "Entering SemSignal System call\n" );
    int semId = machine->ReadRegister( 4 );
    int status = ERROR;
-   /*
    if ( semsBitMap->Test( semId ) ) {
-      semArray[ semId ]->V();
       status = 0;
-   }*/
+      semArray[ semId ]->V();
+   }
    machine->WriteRegister( 2, status );
    returnFromSystemCall();
    DEBUG( 'u', "Exiting SemSignal System call\n" );
@@ -419,11 +419,10 @@ void NachOS_SemWait() {		// System call 14
    DEBUG( 'u', "Entering SemWait System call\n" );
    int semId = machine->ReadRegister( 4 );
    int status = ERROR;
-   /*
    if ( semsBitMap->Test( semId ) ) {
-      semArray[ semId ]->P();
       status = 0;
-   }*/
+      semArray[ semId ]->P();
+   }
    machine->WriteRegister( 2, status );
    returnFromSystemCall();
    DEBUG( 'u', "Exiting SemWait System call\n" );
@@ -434,7 +433,15 @@ void NachOS_SemWait() {		// System call 14
  *  System call interface: Lock_t LockCreate( int )
  */
 void NachOS_LockCreate() {		// System call 15
-
+   DEBUG( 'u', "Entering LockCreate System call\n" );
+   Lock * newLock = new Lock( "new lock" );
+   int lockId = locksBitMap->Find();
+   if ( lockId != ERROR ) {
+      lockArray[ lockId ] = newLock;
+   }
+   machine->WriteRegister( 2, lockId );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting LockCreate System call\n" );
 }
 
 
@@ -442,6 +449,17 @@ void NachOS_LockCreate() {		// System call 15
  *  System call interface: int LockDestroy( Lock_t )
  */
 void NachOS_LockDestroy() {		// System call 16
+   DEBUG( 'u', "Entering LockDestroy System call\n" );
+   int lockId = machine->ReadRegister( 4 );
+   int status = ERROR;
+   if ( locksBitMap->Test( lockId ) ) {
+      status = 0;
+      locksBitMap->Clear( lockId );
+      delete lockArray[ lockId ];
+   }
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting LockDestroy System call\n" );
 }
 
 
@@ -449,6 +467,16 @@ void NachOS_LockDestroy() {		// System call 16
  *  System call interface: int LockAcquire( Lock_t )
  */
 void NachOS_LockAcquire() {		// System call 17
+   DEBUG( 'u', "Entering LockAcquire System call\n" );
+   int lockId = machine->ReadRegister( 4 );
+   int status = ERROR;
+   if ( locksBitMap->Test( lockId ) ) {
+      status = 0;
+      lockArray[ lockId ]->Acquire();
+   }
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting LockAcquire System call\n" );
 }
 
 
@@ -456,6 +484,16 @@ void NachOS_LockAcquire() {		// System call 17
  *  System call interface: int LockRelease( Lock_t )
  */
 void NachOS_LockRelease() {		// System call 18
+   DEBUG( 'u', "Entering LockRelease System call\n" );
+   int lockId = machine->ReadRegister( 4 );
+   int status = ERROR;
+   if ( locksBitMap->Test( lockId ) ) {
+      status = 0;
+      lockArray[ lockId ]->Release();
+   }
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting LockRelease System call\n" );
 }
 
 
@@ -463,6 +501,16 @@ void NachOS_LockRelease() {		// System call 18
  *  System call interface: Cond_t LockCreate( int )
  */
 void NachOS_CondCreate() {		// System call 19
+   DEBUG( 'u', "Entering CondCreate System call\n" );
+   //int initValue = machine->ReadRegister( 4 ); TODO: what is this for?
+   Condition * newCond = new Condition( "new condition");
+   int condId = condsBitMap->Find();
+   if ( condId != ERROR ) {
+      condArray[ condId ] = newCond;
+   }
+   machine->WriteRegister( 2, condId );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting CondCreate System call\n" );
 }
 
 
@@ -470,6 +518,17 @@ void NachOS_CondCreate() {		// System call 19
  *  System call interface: int CondDestroy( Cond_t )
  */
 void NachOS_CondDestroy() {		// System call 20
+   DEBUG( 'u', "Entering CondDestroy System call\n" );
+   int condId = machine->ReadRegister( 4 );
+   int status = ERROR;
+   if ( condsBitMap->Test( condId ) ) {
+      status = 0;
+      condsBitMap->Clear( condId );
+      delete condArray[ condId ];
+   }
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting CondDestroy System call\n" );
 }
 
 
@@ -477,6 +536,16 @@ void NachOS_CondDestroy() {		// System call 20
  *  System call interface: int CondSignal( Cond_t )
  */
 void NachOS_CondSignal() {		// System call 21
+   DEBUG( 'u', "Entering CondSignal System call\n" );
+   int condId = machine->ReadRegister( 4 );
+   int lockId = machine->ReadRegister( 5 );
+   int status = ERROR;
+   if ( condsBitMap->Test( condId ) ) {
+      status = 0;
+      condArray[ condId ]->Signal( lockArray[ lockId ] );
+   }
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
 }
 
 
@@ -484,6 +553,17 @@ void NachOS_CondSignal() {		// System call 21
  *  System call interface: int CondWait( Cond_t )
  */
 void NachOS_CondWait() {		// System call 22
+   DEBUG( 'u', "Entering CondWait System call\n" );
+   int condId = machine->ReadRegister( 4 );
+   int lockId = machine->ReadRegister( 5 );
+   int status = ERROR;
+   if ( condsBitMap->Test( condId ) ) {
+      status = 0;
+      condArray[ condId ]->Wait( lockArray[ lockId ] );
+   }
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting CondWait System call\n" );
 }
 
 
@@ -491,6 +571,17 @@ void NachOS_CondWait() {		// System call 22
  *  System call interface: int CondBroadcast( Cond_t )
  */
 void NachOS_CondBroadcast() {		// System call 23
+   DEBUG( 'u', "Entering CondBroadcast System call\n" );
+   int condId = machine->ReadRegister( 4 );
+   int lockId = machine->ReadRegister( 5 ); // TODO: check if this is correct
+   int status = ERROR;
+   if ( condsBitMap->Test( condId ) ) {
+      status = 0;
+      condArray[ condId ]->Broadcast( lockArray[ lockId ] );
+   }
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting CondBroadcast System call\n" );
 }
 
 
