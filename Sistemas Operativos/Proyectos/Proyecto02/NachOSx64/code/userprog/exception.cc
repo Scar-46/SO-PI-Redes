@@ -78,7 +78,6 @@ void NachOS_Exit() {		// System call 1
    currentThread->openFilesTable->delThread();
    if (currentThread->space != NULL) {
       delete currentThread->space;
-      currentThread->space = NULL;
    }
    if (currentThread->joinSem != nullptr) {
       currentThread->joinSem->V();
@@ -146,6 +145,7 @@ void NachOS_Join() {		// System call 3
       Semaphore *sem = new Semaphore("sem", 0);
       thread->joinSem = sem;
       sem->P();
+      currentThread->processTable->delThread(idThread);
    }
    returnFromSystemCall();
    DEBUG('a', "Finishing Join.\n");
