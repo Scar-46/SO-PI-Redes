@@ -42,6 +42,7 @@ BitMap * locksBitMap = new BitMap(10);
 BitMap * condsBitMap = new BitMap(10);
 
 void returnFromSystemCall() {
+
    machine->WriteRegister( PrevPCReg, machine->ReadRegister( PCReg ) );		// PrevPC <- PC
    machine->WriteRegister( PCReg, machine->ReadRegister( NextPCReg ) );			// PC <- NextPC
    machine->WriteRegister( NextPCReg, machine->ReadRegister( NextPCReg ) + 4 );	// NextPC <- NextPC + 4
@@ -117,9 +118,7 @@ void NachOS_Exec() {		// System call 2
    char buffer[BUFFERSIZE];
    int threadID;
    reading (buffer);
-   printf("Buffer: %s\n", buffer);
    OpenFile *executable = fileSystem->Open(buffer);
-   printf("Opening file %s\n", buffer);
    if (executable == NULL) {
       printf ("Unable to open file");
       machine->WriteRegister(2, ERROR); // Return -1 if error
@@ -163,7 +162,6 @@ void NachOS_Create() {		// System call 4
    DEBUG('a', "Create file, initiated by user program.\n");
    char buffer[BUFFERSIZE];
    reading (buffer);
-   printf("Buffer: %s\n", buffer);
    int idFileUnix = creat(buffer, 0666); // 0666: Read and write permission for owner, group, and others
    if (idFileUnix == ERROR) {
       printf("Unable to create file %s\n", buffer);
@@ -185,8 +183,9 @@ void NachOS_Open() {		// System call 5
    DEBUG('a', "Open file, initiated by user program.\n");
    char buffer[BUFFERSIZE];
    reading (buffer);
-   int idFileUnix = open(buffer, O_RDWR); // Open for reading and writing
-   printf("Opening file %s\n", buffer);
+   
+   int idFileUnix = open(buffer, O_RDWR); // O_RDWR: Open for reading and writing. The file is created if it does not exist.
+
    if (idFileUnix == ERROR) {
       printf("Unable to open file %s\n", buffer);
       machine->WriteRegister(2, ERROR); // Return -1 if error
