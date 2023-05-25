@@ -1,23 +1,30 @@
+
 #include "syscall.h"
 
-int
-main()
-{
-    OpenFileId input;
-    OpenFileId output;
-    char buffer[1024];
-    int n = 0;
 
+void Verifica();
 
-    Create( "nachos.2" );
-    input  = Open( "nachos.1" );
-    output = Open( "nachos.2" );
-    while( (n = Read( buffer, 1024, input ) ) > 0 ) {
-	Write( buffer, n, output);
-    }
-    Close( input );
-    Close( output );
+int main() {
 
-    Exit( 0 );
+    Write("Bienvenido a pruebas\n", 21, 1 );
+    Fork( Verifica );
+    Yield();
 }
+
+void Verifica() {
+
+    char buffer[100];
+
+    Write( "Inserte una palabra:\n", 21, 1 );
+    int i = 0;
+    do {
+        Read( &buffer[i], 100, 0 );
+    } while( buffer[i++] != '\n' );
+    
+   
+    Write( "Su palabra es:\n", 15, 1 );
+    Write( buffer, 100, 1 );
+
+}
+
 
