@@ -87,8 +87,8 @@ main.o: ../threads/main.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/system.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
- ../filesys/openfile.h ../threads/utility.h ../threads/ProcessTable.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
+ ../threads/utility.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -184,8 +184,8 @@ scheduler.o: ../threads/scheduler.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
- ../filesys/openfile.h ../threads/utility.h ../threads/ProcessTable.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
+ ../threads/utility.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -281,7 +281,7 @@ synch.o: ../threads/synch.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/NachosOpenFilesTable.h \
- ../threads/bitmap.h ../filesys/openfile.h ../threads/utility.h \
+ ../userprog/bitmap.h ../threads/utility.h ../filesys/openfile.h \
  ../threads/ProcessTable.h /usr/include/c++/11/vector \
  /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
@@ -378,8 +378,8 @@ system.o: ../threads/system.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
- ../filesys/openfile.h ../threads/utility.h ../threads/ProcessTable.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
+ ../threads/utility.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -475,7 +475,7 @@ thread.o: ../threads/thread.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/NachosOpenFilesTable.h \
- ../threads/bitmap.h ../filesys/openfile.h ../threads/utility.h \
+ ../userprog/bitmap.h ../threads/utility.h ../filesys/openfile.h \
  ../threads/ProcessTable.h /usr/include/c++/11/vector \
  /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
@@ -641,8 +641,8 @@ threadtest.o: ../threads/threadtest.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
- ../filesys/openfile.h ../threads/utility.h ../threads/ProcessTable.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
+ ../threads/utility.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -740,7 +740,7 @@ diningph.o: ../threads/diningph.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/NachosOpenFilesTable.h \
- ../threads/bitmap.h ../filesys/openfile.h ../threads/utility.h \
+ ../userprog/bitmap.h ../threads/utility.h ../filesys/openfile.h \
  ../threads/ProcessTable.h /usr/include/c++/11/vector \
  /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
@@ -835,8 +835,8 @@ interrupt.o: ../machine/interrupt.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/system.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
- ../filesys/openfile.h ../threads/utility.h ../threads/ProcessTable.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
+ ../threads/utility.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -992,8 +992,8 @@ sysdep.o: ../machine/sysdep.cc /usr/include/stdc-predef.h \
  /usr/include/c++/11/bits/std_abs.h ../machine/interrupt.h \
  ../threads/list.h ../threads/copyright.h ../threads/utility.h \
  ../machine/sysdep.h ../threads/system.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
- ../filesys/openfile.h ../threads/utility.h ../threads/ProcessTable.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
+ ../threads/utility.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -1150,7 +1150,7 @@ timer.o: ../machine/timer.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/system.h ../threads/utility.h \
  ../threads/thread.h ../threads/NachosOpenFilesTable.h \
- ../threads/bitmap.h ../filesys/openfile.h ../threads/ProcessTable.h \
+ ../userprog/bitmap.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -1246,8 +1246,8 @@ preemptive.o: ../threads/preemptive.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
- ../filesys/openfile.h ../threads/utility.h ../threads/ProcessTable.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
+ ../threads/utility.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -1340,9 +1340,9 @@ NachosOpenFilesTable.o: ../threads/NachosOpenFilesTable.cc \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
  /usr/include/x86_64-linux-gnu/bits/floatn.h \
- /usr/include/x86_64-linux-gnu/bits/floatn-common.h ../threads/bitmap.h \
- ../threads/copyright.h ../threads/utility.h ../machine/sysdep.h \
- ../threads/copyright.h /usr/include/c++/11/stdlib.h \
+ /usr/include/x86_64-linux-gnu/bits/floatn-common.h ../userprog/bitmap.h \
+ ../threads/copyright.h ../threads/utility.h ../threads/copyright.h \
+ ../machine/sysdep.h /usr/include/c++/11/stdlib.h \
  /usr/include/c++/11/cstdlib \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
@@ -1376,7 +1376,7 @@ NachosOpenFilesTable.o: ../threads/NachosOpenFilesTable.cc \
  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h /usr/include/alloca.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
  /usr/include/c++/11/bits/std_abs.h /usr/include/string.h \
- /usr/include/strings.h ../filesys/openfile.h ../threads/utility.h
+ /usr/include/strings.h ../filesys/openfile.h
 ProcessTable.o: ../threads/ProcessTable.cc /usr/include/stdc-predef.h \
  ../threads/ProcessTable.h ../threads/thread.h ../threads/copyright.h \
  ../threads/utility.h ../machine/sysdep.h ../threads/copyright.h \
@@ -1437,7 +1437,7 @@ ProcessTable.o: ../threads/ProcessTable.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/NachosOpenFilesTable.h \
- ../threads/bitmap.h ../filesys/openfile.h ../threads/utility.h \
+ ../userprog/bitmap.h ../threads/utility.h ../filesys/openfile.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -1471,66 +1471,6 @@ ProcessTable.o: ../threads/ProcessTable.cc /usr/include/stdc-predef.h \
  /usr/include/c++/11/bits/vector.tcc ../machine/machine.h \
  ../machine/translate.h ../machine/disk.h ../userprog/addrspace.h \
  ../filesys/filesys.h ../filesys/openfile.h
-bitmap.o: ../threads/bitmap.cc /usr/include/stdc-predef.h \
- ../threads/copyright.h ../threads/bitmap.h ../threads/utility.h \
- ../machine/sysdep.h ../threads/copyright.h /usr/include/c++/11/stdlib.h \
- /usr/include/c++/11/cstdlib \
- /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
- /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
- /usr/include/features.h /usr/include/features-time64.h \
- /usr/include/x86_64-linux-gnu/bits/wordsize.h \
- /usr/include/x86_64-linux-gnu/bits/timesize.h \
- /usr/include/x86_64-linux-gnu/sys/cdefs.h \
- /usr/include/x86_64-linux-gnu/bits/long-double.h \
- /usr/include/x86_64-linux-gnu/gnu/stubs.h \
- /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
- /usr/include/x86_64-linux-gnu/c++/11/bits/cpu_defines.h \
- /usr/include/c++/11/pstl/pstl_config.h /usr/include/stdlib.h \
- /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
- /usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h \
- /usr/include/x86_64-linux-gnu/bits/waitflags.h \
- /usr/include/x86_64-linux-gnu/bits/waitstatus.h \
- /usr/include/x86_64-linux-gnu/bits/floatn.h \
- /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
- /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
- /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
- /usr/include/x86_64-linux-gnu/sys/types.h \
- /usr/include/x86_64-linux-gnu/bits/types.h \
- /usr/include/x86_64-linux-gnu/bits/typesizes.h \
- /usr/include/x86_64-linux-gnu/bits/time64.h \
- /usr/include/x86_64-linux-gnu/bits/types/clock_t.h \
- /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h \
- /usr/include/x86_64-linux-gnu/bits/types/time_t.h \
- /usr/include/x86_64-linux-gnu/bits/types/timer_t.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-intn.h /usr/include/endian.h \
- /usr/include/x86_64-linux-gnu/bits/endian.h \
- /usr/include/x86_64-linux-gnu/bits/endianness.h \
- /usr/include/x86_64-linux-gnu/bits/byteswap.h \
- /usr/include/x86_64-linux-gnu/bits/uintn-identity.h \
- /usr/include/x86_64-linux-gnu/sys/select.h \
- /usr/include/x86_64-linux-gnu/bits/select.h \
- /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
- /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
- /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
- /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
- /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
- /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
- /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
- /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
- /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h /usr/include/alloca.h \
- /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
- /usr/include/c++/11/bits/std_abs.h /usr/include/stdio.h \
- /usr/lib/gcc/x86_64-linux-gnu/11/include/stdarg.h \
- /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \
- /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h \
- /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h \
- /usr/include/x86_64-linux-gnu/bits/types/__FILE.h \
- /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
- /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
- /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
- /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
- /usr/include/strings.h ../filesys/openfile.h ../threads/utility.h
 addrspace.o: ../userprog/addrspace.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/system.h ../threads/copyright.h \
  ../threads/utility.h ../machine/sysdep.h /usr/include/c++/11/stdlib.h \
@@ -1591,8 +1531,8 @@ addrspace.o: ../userprog/addrspace.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
- ../filesys/openfile.h ../threads/utility.h ../threads/ProcessTable.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
+ ../threads/utility.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -1703,8 +1643,8 @@ exception.o: ../userprog/exception.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
- ../filesys/openfile.h ../threads/utility.h ../threads/ProcessTable.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
+ ../threads/utility.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -1740,7 +1680,7 @@ exception.o: ../userprog/exception.cc /usr/include/stdc-predef.h \
  ../filesys/filesys.h ../filesys/openfile.h ../threads/scheduler.h \
  ../threads/list.h ../machine/interrupt.h ../threads/list.h \
  ../machine/stats.h ../machine/timer.h ../userprog/syscall.h \
- ../threads/synch.h ../threads/bitmap.h
+ ../threads/synch.h ../userprog/bitmap.h
 progtest.o: ../userprog/progtest.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/system.h ../threads/copyright.h \
  ../threads/utility.h ../machine/sysdep.h /usr/include/c++/11/stdlib.h \
@@ -1801,8 +1741,8 @@ progtest.o: ../userprog/progtest.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
- ../filesys/openfile.h ../threads/utility.h ../threads/ProcessTable.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
+ ../threads/utility.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -1900,7 +1840,7 @@ console.o: ../machine/console.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../threads/system.h ../threads/utility.h \
  ../threads/thread.h ../threads/NachosOpenFilesTable.h \
- ../threads/bitmap.h ../filesys/openfile.h ../threads/ProcessTable.h \
+ ../userprog/bitmap.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -1997,7 +1937,7 @@ machine.o: ../machine/machine.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
  /usr/include/strings.h ../machine/translate.h ../machine/disk.h \
  ../threads/system.h ../threads/utility.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
  ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
@@ -2095,7 +2035,7 @@ mipssim.o: ../machine/mipssim.cc /usr/include/stdc-predef.h \
  /usr/include/strings.h ../machine/translate.h ../machine/disk.h \
  ../machine/mipssim.h ../threads/system.h ../threads/utility.h \
  ../threads/thread.h ../threads/NachosOpenFilesTable.h \
- ../threads/bitmap.h ../filesys/openfile.h ../threads/ProcessTable.h \
+ ../userprog/bitmap.h ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
  /usr/include/c++/11/bits/exception_defines.h \
@@ -2192,7 +2132,7 @@ translate.o: ../machine/translate.cc /usr/include/stdc-predef.h \
  /usr/include/strings.h ../machine/translate.h ../machine/disk.h \
  ../userprog/addrspace.h ../filesys/filesys.h ../filesys/openfile.h \
  ../threads/system.h ../threads/utility.h ../threads/thread.h \
- ../threads/NachosOpenFilesTable.h ../threads/bitmap.h \
+ ../threads/NachosOpenFilesTable.h ../userprog/bitmap.h \
  ../filesys/openfile.h ../threads/ProcessTable.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/c++/11/bits/functexcept.h \
@@ -2227,6 +2167,66 @@ translate.o: ../machine/translate.cc /usr/include/stdc-predef.h \
  /usr/include/c++/11/bits/vector.tcc ../machine/machine.h \
  ../threads/scheduler.h ../threads/list.h ../machine/interrupt.h \
  ../threads/list.h ../machine/stats.h ../machine/timer.h
+bitmap.o: ../userprog/bitmap.cc /usr/include/stdc-predef.h \
+ ../threads/copyright.h ../userprog/bitmap.h ../threads/utility.h \
+ ../threads/copyright.h ../machine/sysdep.h /usr/include/c++/11/stdlib.h \
+ /usr/include/c++/11/cstdlib \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
+ /usr/include/features.h /usr/include/features-time64.h \
+ /usr/include/x86_64-linux-gnu/bits/wordsize.h \
+ /usr/include/x86_64-linux-gnu/bits/timesize.h \
+ /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+ /usr/include/x86_64-linux-gnu/bits/long-double.h \
+ /usr/include/x86_64-linux-gnu/gnu/stubs.h \
+ /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/cpu_defines.h \
+ /usr/include/c++/11/pstl/pstl_config.h /usr/include/stdlib.h \
+ /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
+ /usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h \
+ /usr/include/x86_64-linux-gnu/bits/waitflags.h \
+ /usr/include/x86_64-linux-gnu/bits/waitstatus.h \
+ /usr/include/x86_64-linux-gnu/bits/floatn.h \
+ /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
+ /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
+ /usr/include/x86_64-linux-gnu/sys/types.h \
+ /usr/include/x86_64-linux-gnu/bits/types.h \
+ /usr/include/x86_64-linux-gnu/bits/typesizes.h \
+ /usr/include/x86_64-linux-gnu/bits/time64.h \
+ /usr/include/x86_64-linux-gnu/bits/types/clock_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/time_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/timer_t.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-intn.h /usr/include/endian.h \
+ /usr/include/x86_64-linux-gnu/bits/endian.h \
+ /usr/include/x86_64-linux-gnu/bits/endianness.h \
+ /usr/include/x86_64-linux-gnu/bits/byteswap.h \
+ /usr/include/x86_64-linux-gnu/bits/uintn-identity.h \
+ /usr/include/x86_64-linux-gnu/sys/select.h \
+ /usr/include/x86_64-linux-gnu/bits/select.h \
+ /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
+ /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
+ /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
+ /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
+ /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
+ /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
+ /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h /usr/include/alloca.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
+ /usr/include/c++/11/bits/std_abs.h /usr/include/stdio.h \
+ /usr/lib/gcc/x86_64-linux-gnu/11/include/stdarg.h \
+ /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/__FILE.h \
+ /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
+ /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio_lim.h /usr/include/string.h \
+ /usr/include/strings.h ../filesys/openfile.h
 # DEPENDENCIES MUST END AT END OF FILE
 # IF YOU PUT STUFF HERE IT WILL GO AWAY
 # see make depend above
