@@ -94,27 +94,33 @@ AddrSpace::AddrSpace(OpenFile *executable)
 					// a separate page, we could set its 
 					// pages to be read-only
     }
-	unsigned int codeSegmentSize = divRoundUp(noffH.code.size, PageSize);
-// then, copy in the code and data segments into memory
-    if (noffH.code.size > 0) { 
-		DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
-		//executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),noffH.code.size, noffH.code.inFileAddr);
-		for (i = 0; i <= codeSegmentSize; i++) {
-			int pageFrame = pageTable[i].physicalPage;
-			executable->ReadAt(&(machine->mainMemory[pageFrame * PageSize]), PageSize, (noffH.code.inFileAddr + i * PageSize));
-		}
-    }
-	unsigned int dataSegmentSize = divRoundUp(noffH.initData.size, PageSize);
-    if (noffH.initData.size > 0) {
-        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
-		// executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]), noffH.initData.size, noffH.initData.inFileAddr);
-		unsigned int totalPages = codeSegmentSize + dataSegmentSize;
-		for (i = codeSegmentSize; i <= totalPages; i++) {
-			int pageFrame = pageTable[i].physicalPage;
-			executable->ReadAt(&(machine->mainMemory[pageFrame * PageSize]), PageSize, (noffH.initData.inFileAddr + i * PageSize));
-		}
-    }
 
+	//write the code segment into the memory
+	int codeSize = noffH.code.size;
+	
+	while(codeSize > 0){
+		int vpn = (noffH.code.virtualAddr + noffH.code.size - codeSize) / PageSize;
+		int offset = (noffH.code.virtualAddr + noffH.code.size - codeSize) % PageSize;
+		int paddr = pageTable[vpn].physicalPage * PageSize + offset;
+		int readSize = PageSize - offset;
+		if(readSize > codeSize) readSize = codeSize;
+		executable->ReadAt(&(machine->mainMemory[paddr]), readSize, noffH.code.inFileAddr + noffH.code.size - codeSize);
+		codeSize -= readSize;
+	}
+
+	//write the init data segment into the memory
+	int initDataSize = noffH.initData.size;
+	
+	while(initDataSize > 0){
+		int vpn = (noffH.initData.virtualAddr + noffH.initData.size - initDataSize) / PageSize;
+		int offset = (noffH.initData.virtualAddr + noffH.initData.size - initDataSize) % PageSize;
+		int paddr = pageTable[vpn].physicalPage * PageSize + offset;
+		int readSize = PageSize - offset;
+		if(readSize > initDataSize) readSize = initDataSize;
+		executable->ReadAt(&(machine->mainMemory[paddr]), readSize, noffH.initData.inFileAddr + noffH.initData.size - initDataSize);
+		initDataSize -= readSize;
+	}
+	
 }
 
 //----------------------------------------------------------------------

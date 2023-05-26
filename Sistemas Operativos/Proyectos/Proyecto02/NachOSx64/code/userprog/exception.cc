@@ -21,14 +21,19 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
-#include <fcntl.h>
-#include <unistd.h>
+#include <fcntl.h> // for open system call
+#include <unistd.h> // for read system call
+#include <sys/socket.h> // for socket system call
+#include <string.h>  // for memset
+#include <arpa/inet.h>  // for inet_pton
+#include <sys/types.h>  // for connect
 
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
 #include "synch.h"
-#include "bitmap.h"
+#include "bitmap.h" 
+
 
 #define BUFFERSIZE 1024
 #define ERROR -1
@@ -259,6 +264,9 @@ void NachOS_Read() {		// System call 7
       case  ConsoleInput:	// User can read from standard input
          numRead = read(0, buffer, size);
          machine->WriteRegister( 2, numRead );
+         for (int i = 0; i < numRead; ++i) {
+            machine->WriteMem(machine->ReadRegister(4) + i, 1, buffer[i]);
+         }
          stats->numConsoleCharsRead += numRead;
          break;
       case  ConsoleOutput: // User could not read from standard output
@@ -588,6 +596,13 @@ void NachOS_CondBroadcast() {		// System call 23
  *  System call interface: Socket_t Socket( int, int )
  */
 void NachOS_Socket() {			// System call 30
+   DEBUG( 'u', "Entering Socket System call\n" );
+   int family = machine->ReadRegister( 4 );
+   int type = machine->ReadRegister( 5 );
+   int socketId = socket(family, type, 0);
+   machine->WriteRegister( 2, socketId );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting Socket System call\n" );
 }
 
 
@@ -595,6 +610,20 @@ void NachOS_Socket() {			// System call 30
  *  System call interface: Socket_t Connect( char *, int )
  */
 void NachOS_Connect() {		// System call 31
+   DEBUG( 'u', "Entering Connect System call\n" );
+   int socketId = machine->ReadRegister( 4 );
+   int status;
+   struct sockaddr_in hostAddr;
+   struct sockaddr * ha;
+   memset(&hostAddr, 0, sizeof(hostAddr));
+   hostAddr.sin_family = AF_INET;
+   hostAddr.sin_port = htons( machine->ReadRegister( 5 ) );
+   inet_pton(AF_INET, (char*) machine->ReadRegister( 6 ), &hostAddr.sin_addr);
+   ha = (struct sockaddr *) &hostAddr;
+   status = connect(socketId, ha, sizeof(hostAddr));
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting Connect System call\n" );
 }
 
 
@@ -602,6 +631,18 @@ void NachOS_Connect() {		// System call 31
  *  System call interface: int Bind( Socket_t, int )
  */
 void NachOS_Bind() {		// System call 32
+   DEBUG( 'u', "Entering Bind System call\n" );
+   int socketId = machine->ReadRegister( 4 );
+   int status;
+   struct sockaddr_in serverAddr;
+   memset(&serverAddr, 0, sizeof(serverAddr));
+   serverAddr.sin_family = AF_INET;
+   serverAddr.sin_port = htons( machine->ReadRegister( 5 ) );
+   serverAddr.sin_addr.s_addr = INADDR_ANY;
+   status = bind(socketId, (struct sockaddr *) &serverAddr, sizeof(serverAddr));
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting Bind System call\n" );
 }
 
 
@@ -609,6 +650,13 @@ void NachOS_Bind() {		// System call 32
  *  System call interface: int Listen( Socket_t, int )
  */
 void NachOS_Listen() {		// System call 33
+   DEBUG( 'u', "Entering Listen System call\n" );
+   int socketId = machine->ReadRegister( 4 );
+   int status;
+   status = listen(socketId, machine->ReadRegister( 5 ));
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting Listen System call\n" );
 }
 
 
@@ -616,6 +664,15 @@ void NachOS_Listen() {		// System call 33
  *  System call interface: int Accept( Socket_t )
  */
 void NachOS_Accept() {		// System call 34
+   DEBUG( 'u', "Entering Accept System call\n" );
+   int socketId = machine->ReadRegister( 4 );
+   int status;
+   struct sockaddr_in clientAddr;
+   socklen_t clientAddrLen = sizeof(clientAddr);
+   int newSocketId = accept(socketId, (struct sockaddr *) &clientAddr, &clientAddrLen);
+   machine->WriteRegister( 2, newSocketId );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting Accept System call\n" );
 }
 
 
@@ -623,6 +680,13 @@ void NachOS_Accept() {		// System call 34
  *  System call interface: int Shutdown( Socket_t, int )
  */
 void NachOS_Shutdown() {	// System call 25
+   DEBUG( 'u', "Entering Shutdown System call\n" );
+   int socketId = machine->ReadRegister( 4 );
+   int status;
+   status = shutdown(socketId, machine->ReadRegister( 5 ));
+   machine->WriteRegister( 2, status );
+   returnFromSystemCall();
+   DEBUG( 'u', "Exiting Shutdown System call\n" );
 }
 
 //----------------------------------------------------------------------
