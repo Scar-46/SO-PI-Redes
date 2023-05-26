@@ -182,10 +182,10 @@ int LckUnlock( Lock_t lockId );
 
 typedef int Cond_t;
 /* CondCreate creates a condition variable */
-int CondCreate( Cond_t condId );
+int CondCreate( );
 
 /* CondDestroy destroy an already created Lock */
-int LckDestroy( Cond_t condId );
+int CondDestroy( Cond_t condId );
 
 /* CondSignal signal on condition variable, awaking other threads if necessary */
 int CondSignal( Cond_t condId, Lock_t lockId );

@@ -510,7 +510,6 @@ void NachOS_LockRelease() {		// System call 18
  */
 void NachOS_CondCreate() {		// System call 19
    DEBUG( 'u', "Entering CondCreate System call\n" );
-   //int initValue = machine->ReadRegister( 4 ); TODO: what is this for?
    Condition * newCond = new Condition( "new condition");
    int condId = condsBitMap->Find();
    if ( condId != ERROR ) {
@@ -627,7 +626,6 @@ void NachOS_Connect() {		// System call 31
    DEBUG( 'u', "Entering Connect System call\n" );
    int idFileNachos = machine->ReadRegister( 4 );
    int socketId = currentThread->openFilesTable->getUnixHandle(idFileNachos);
-   int status;
    struct sockaddr_in hostAddr;
    struct sockaddr * ha;
    memset(&hostAddr, 0, sizeof(hostAddr));
@@ -637,7 +635,10 @@ void NachOS_Connect() {		// System call 31
    reading (hostName, 5);
    inet_pton(AF_INET, hostName, &hostAddr.sin_addr);
    ha = (struct sockaddr *) &hostAddr;
-   status = connect(socketId, ha, sizeof(hostAddr));
+   int status = connect(socketId, ha, sizeof(hostAddr));
+   if (status == ERROR) {
+      printf("Unable to connect\n");
+   }
    machine->WriteRegister( 2, status );
    returnFromSystemCall();
    DEBUG( 'u', "Exiting Connect System call\n" );
@@ -651,13 +652,15 @@ void NachOS_Bind() {		// System call 32
    DEBUG( 'u', "Entering Bind System call\n" );
    int idFileNachos = machine->ReadRegister( 4 );
    int socketId = currentThread->openFilesTable->getUnixHandle(idFileNachos);
-   int status;
    struct sockaddr_in serverAddr;
    memset(&serverAddr, 0, sizeof(serverAddr));
    serverAddr.sin_family = AF_INET;
    serverAddr.sin_port = htons( machine->ReadRegister( 5 ) );
    serverAddr.sin_addr.s_addr = INADDR_ANY;
-   status = bind(socketId, (struct sockaddr *) &serverAddr, sizeof(serverAddr));
+   int status = bind(socketId, (struct sockaddr *) &serverAddr, sizeof(serverAddr));
+   if (status == ERROR) {
+      printf("Unable to bind socket\n");
+   }
    machine->WriteRegister( 2, status );
    returnFromSystemCall();
    DEBUG( 'u', "Exiting Bind System call\n" );
@@ -671,8 +674,10 @@ void NachOS_Listen() {		// System call 33
    DEBUG( 'u', "Entering Listen System call\n" );
    int idFileNachos = machine->ReadRegister( 4 );
    int socketId = currentThread->openFilesTable->getUnixHandle(idFileNachos);
-   int status;
-   status = listen(socketId, machine->ReadRegister( 5 ));
+   int status = listen(socketId, machine->ReadRegister( 5 ));
+   if (status == ERROR) {
+      printf("Unable to listen\n");
+   }
    machine->WriteRegister( 2, status );
    returnFromSystemCall();
    DEBUG( 'u', "Exiting Listen System call\n" );
@@ -686,11 +691,17 @@ void NachOS_Accept() {		// System call 34
    DEBUG( 'u', "Entering Accept System call\n" );
    int idFileNachos = machine->ReadRegister( 4 );
    int socketId = currentThread->openFilesTable->getUnixHandle(idFileNachos);
-   int status;
-   struct sockaddr_in clientAddr;
+   struct sockaddr_in6 clientAddr;
    socklen_t clientAddrLen = sizeof(clientAddr);
-   int newSocketId = accept(socketId, (struct sockaddr *) &clientAddr, &clientAddrLen);
-   machine->WriteRegister( 2, newSocketId );
+   int status = accept(socketId, (struct sockaddr *) &clientAddr, &clientAddrLen);
+   if (status == ERROR) {
+      printf("Unable to accept connection\n");
+      machine->WriteRegister(2, ERROR); // Return -1 if error
+   } else {
+      currentThread->openFilesTable->Close(idFileNachos);
+      int newSocketId = currentThread->openFilesTable->Open(status);
+      machine->WriteRegister(2, newSocketId); // Return the file descriptor
+   }
    returnFromSystemCall();
    DEBUG( 'u', "Exiting Accept System call\n" );
 }
@@ -703,8 +714,10 @@ void NachOS_Shutdown() {	// System call 25
    DEBUG( 'u', "Entering Shutdown System call\n" );
    int idFileNachos = machine->ReadRegister( 4 );
    int socketId = currentThread->openFilesTable->getUnixHandle(idFileNachos);
-   int status;
-   status = shutdown(socketId, machine->ReadRegister( 5 ));
+   int status = shutdown(socketId, machine->ReadRegister( 5 ));
+   if (status == ERROR) {
+      printf("Unable to shutdown connection\n");
+   }
    machine->WriteRegister( 2, status );
    returnFromSystemCall();
    DEBUG( 'u', "Exiting Shutdown System call\n" );
