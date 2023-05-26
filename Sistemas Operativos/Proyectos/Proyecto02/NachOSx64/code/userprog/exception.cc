@@ -54,11 +54,11 @@ void returnFromSystemCall() {
 
 }  // returnFromSystemCall
 
-void reading (char* buffer) {
+void reading (char* buffer, int reg) {
 
 	int character = 1;
 	for (int i = 0; character != '\0'; ++i) {
-		machine->ReadMem(machine->ReadRegister(4) + i, 1, &character);
+		machine->ReadMem(machine->ReadRegister(reg) + i, 1, &character);
 		buffer[i] = (char) character;
 	}
 
@@ -122,7 +122,7 @@ void NachOS_Exec() {		// System call 2
    DEBUG('a', "Exec, initiated by user program.\n");
    char buffer[BUFFERSIZE];
    int threadID;
-   reading (buffer);
+   reading (buffer, 4);
    OpenFile *executable = fileSystem->Open(buffer);
    if (executable == NULL) {
       printf ("Unable to open file");
@@ -166,7 +166,7 @@ void NachOS_Join() {		// System call 3
 void NachOS_Create() {		// System call 4
    DEBUG('a', "Create file, initiated by user program.\n");
    char buffer[BUFFERSIZE];
-   reading (buffer);
+   reading (buffer, 4);
    int idFileUnix = creat(buffer, 0666); // 0666: Read and write permission for owner, group, and others
    if (idFileUnix == ERROR) {
       printf("Unable to create file %s\n", buffer);
@@ -187,7 +187,7 @@ void NachOS_Create() {		// System call 4
 void NachOS_Open() {		// System call 5
    DEBUG('a', "Open file, initiated by user program.\n");
    char buffer[BUFFERSIZE];
-   reading (buffer);
+   reading (buffer, 4);
    
    int idFileUnix = open(buffer, O_RDWR); // O_RDWR: Open for reading and writing. The file is created if it does not exist.
 
@@ -212,7 +212,7 @@ void NachOS_Write() {		// System call 6
    int size = machine->ReadRegister( 5 );	// Read size to write
 
    // buffer = Read data from address given by user;
-   reading (buffer);
+   reading (buffer, 4);
    OpenFileId descriptor = machine->ReadRegister( 6 );	// Read file descriptor
 	// Need a semaphore to synchronize access to console
 	console->P();
@@ -236,6 +236,7 @@ void NachOS_Write() {		// System call 6
 			   // Return the number of chars written to user, via r2
             stats->numDiskWrites++;
          } else {
+            printf("Unable to write to file %d\n", descriptor);
             machine->WriteRegister(2, ERROR);
          }
 			break;
@@ -597,10 +598,23 @@ void NachOS_CondBroadcast() {		// System call 23
  */
 void NachOS_Socket() {			// System call 30
    DEBUG( 'u', "Entering Socket System call\n" );
-   int family = machine->ReadRegister( 4 );
-   int type = machine->ReadRegister( 5 );
+   int family = AF_INET;
+   if ( machine->ReadRegister( 4 ) == 1 ) {
+      family = AF_INET6;
+   }
+   int type = SOCK_STREAM;
+   if ( machine->ReadRegister( 5 ) == 1 ) {
+      type = SOCK_DGRAM;
+   }
    int socketId = socket(family, type, 0);
-   machine->WriteRegister( 2, socketId );
+
+   if (socketId == ERROR) {
+      printf("Unable to create socket\n");
+      machine->WriteRegister(2, ERROR); // Return -1 if error
+   } else {
+      int idFileNachos = currentThread->openFilesTable->Open(socketId);
+      machine->WriteRegister(2, idFileNachos); // Return the file descriptor
+   }
    returnFromSystemCall();
    DEBUG( 'u', "Exiting Socket System call\n" );
 }
@@ -611,14 +625,17 @@ void NachOS_Socket() {			// System call 30
  */
 void NachOS_Connect() {		// System call 31
    DEBUG( 'u', "Entering Connect System call\n" );
-   int socketId = machine->ReadRegister( 4 );
+   int idFileNachos = machine->ReadRegister( 4 );
+   int socketId = currentThread->openFilesTable->getUnixHandle(idFileNachos);
    int status;
    struct sockaddr_in hostAddr;
    struct sockaddr * ha;
    memset(&hostAddr, 0, sizeof(hostAddr));
    hostAddr.sin_family = AF_INET;
-   hostAddr.sin_port = htons( machine->ReadRegister( 5 ) );
-   inet_pton(AF_INET, (char*) machine->ReadRegister( 6 ), &hostAddr.sin_addr);
+   hostAddr.sin_port = htons( machine->ReadRegister( 6 ) );
+   char hostName[BUFFERSIZE];
+   reading (hostName, 5);
+   inet_pton(AF_INET, hostName, &hostAddr.sin_addr);
    ha = (struct sockaddr *) &hostAddr;
    status = connect(socketId, ha, sizeof(hostAddr));
    machine->WriteRegister( 2, status );
@@ -632,7 +649,8 @@ void NachOS_Connect() {		// System call 31
  */
 void NachOS_Bind() {		// System call 32
    DEBUG( 'u', "Entering Bind System call\n" );
-   int socketId = machine->ReadRegister( 4 );
+   int idFileNachos = machine->ReadRegister( 4 );
+   int socketId = currentThread->openFilesTable->getUnixHandle(idFileNachos);
    int status;
    struct sockaddr_in serverAddr;
    memset(&serverAddr, 0, sizeof(serverAddr));
@@ -651,7 +669,8 @@ void NachOS_Bind() {		// System call 32
  */
 void NachOS_Listen() {		// System call 33
    DEBUG( 'u', "Entering Listen System call\n" );
-   int socketId = machine->ReadRegister( 4 );
+   int idFileNachos = machine->ReadRegister( 4 );
+   int socketId = currentThread->openFilesTable->getUnixHandle(idFileNachos);
    int status;
    status = listen(socketId, machine->ReadRegister( 5 ));
    machine->WriteRegister( 2, status );
@@ -665,7 +684,8 @@ void NachOS_Listen() {		// System call 33
  */
 void NachOS_Accept() {		// System call 34
    DEBUG( 'u', "Entering Accept System call\n" );
-   int socketId = machine->ReadRegister( 4 );
+   int idFileNachos = machine->ReadRegister( 4 );
+   int socketId = currentThread->openFilesTable->getUnixHandle(idFileNachos);
    int status;
    struct sockaddr_in clientAddr;
    socklen_t clientAddrLen = sizeof(clientAddr);
@@ -681,7 +701,8 @@ void NachOS_Accept() {		// System call 34
  */
 void NachOS_Shutdown() {	// System call 25
    DEBUG( 'u', "Entering Shutdown System call\n" );
-   int socketId = machine->ReadRegister( 4 );
+   int idFileNachos = machine->ReadRegister( 4 );
+   int socketId = currentThread->openFilesTable->getUnixHandle(idFileNachos);
    int status;
    status = shutdown(socketId, machine->ReadRegister( 5 ));
    machine->WriteRegister( 2, status );
