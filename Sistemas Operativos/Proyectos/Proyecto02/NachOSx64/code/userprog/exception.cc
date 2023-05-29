@@ -39,12 +39,6 @@
 #define ERROR -1
 
 Semaphore *console = new Semaphore("console", 1);
-Semaphore * semArray[10];
-Lock * lockArray[10];
-Condition * condArray[10];
-BitMap * semsBitMap = new BitMap(10);
-BitMap * locksBitMap = new BitMap(10);
-BitMap * condsBitMap = new BitMap(10);
 
 void returnFromSystemCall() {
 
@@ -222,7 +216,7 @@ void NachOS_Write() {		// System call 6
 			break;
 		case  ConsoleOutput:
 		   buffer[ size ] = 0;
-			printf( "%s", buffer );
+         write(1, buffer, size);
          stats->numConsoleCharsWritten += size;
 		break;
 		case ConsoleError:	// This trick permits to write integers to console
