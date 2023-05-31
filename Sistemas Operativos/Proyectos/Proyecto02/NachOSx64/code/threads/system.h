@@ -15,7 +15,8 @@
 #include "interrupt.h"
 #include "stats.h"
 #include "timer.h"
-
+#include "bitmap.h"
+#include "synch.h"
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); 	// Initialization,
 						// called before anything else
@@ -28,10 +29,15 @@ extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
 extern Timer *timer;				// the hardware alarm clock
+extern Semaphore * semArray[10];
+extern Lock * lockArray[10];
+extern Condition * condArray[10];
+extern BitMap * semsBitMap;
+extern BitMap * locksBitMap;
+extern BitMap * condsBitMap;
 
 #ifdef USER_PROGRAM
 #include "machine.h"
-#include "bitmap.h"
 extern Machine* machine;	// user program memory and registers
 extern BitMap * MyMap;		// Declares a global variable defined elsewhere
 #endif

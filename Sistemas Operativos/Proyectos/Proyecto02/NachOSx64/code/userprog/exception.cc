@@ -216,7 +216,8 @@ void NachOS_Write() {		// System call 6
 			break;
 		case  ConsoleOutput:
 		   buffer[ size ] = 0;
-         write(1, buffer, size);
+         printf( "%s", buffer );
+         fflush( stdout );
          stats->numConsoleCharsWritten += size;
 		break;
 		case ConsoleError:	// This trick permits to write integers to console

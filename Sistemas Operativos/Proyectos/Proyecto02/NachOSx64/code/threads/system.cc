@@ -18,6 +18,15 @@ Scheduler *scheduler;			// the ready list
 Interrupt *interrupt;			// interrupt status
 Statistics *stats;			// performance metrics
 Timer *timer;				// the hardware timer device,
+
+// Semaphores, Locks and Conditions 
+Semaphore * semArray[10];
+Lock * lockArray[10];
+Condition * condArray[10];
+BitMap * semsBitMap = new BitMap(10);
+BitMap * locksBitMap = new BitMap(10);
+BitMap * condsBitMap = new BitMap(10);
+
 					// for invoking context switches
 					
 // 2007, Jose Miguel Santos Espino
