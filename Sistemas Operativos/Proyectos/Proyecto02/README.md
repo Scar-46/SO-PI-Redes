@@ -146,6 +146,24 @@ Network I/O: packets received 0, sent 0
 Cleaning up...
 ```
 
+El programa `semtest` tiene la siguiente salida:
+
+```bash
+Bienvenido a pruebas
+Hilo secundario (Debe ser el primero)
+Hilo principal (Debe ser el segundo)
+Machine halting!
+
+Ticks: total 217, idle 0, system 120, user 97
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 97
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+```
+En dicha salida se puede observar que el hilo secundario se ejecuta primero que el hilo principal, gracias a la implementación de los semáforos.
+
 ## Créditos
 
 ### Autores
