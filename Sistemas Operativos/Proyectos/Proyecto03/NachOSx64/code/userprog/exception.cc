@@ -161,6 +161,7 @@ void NachOS_Create() {		// System call 4
    DEBUG('a', "Create file, initiated by user program.\n");
    char buffer[BUFFERSIZE];
    reading (buffer, 4);
+   printf("Creating file %s\n", buffer);
    int idFileUnix = creat(buffer, 0666); // 0666: Read and write permission for owner, group, and others
    if (idFileUnix == ERROR) {
       printf("Unable to create file %s\n", buffer);
@@ -828,22 +829,22 @@ ExceptionHandler(ExceptionType which)
                 break;
 
              case SC_Socket:	// System call # 30
-		          NachOS_Socket();
+		NachOS_Socket();
                break;
              case SC_Connect:	// System call # 31
-		          NachOS_Connect();
+		NachOS_Connect();
                break;
              case SC_Bind:	// System call # 32
-		          NachOS_Bind();
+		NachOS_Bind();
                break;
              case SC_Listen:	// System call # 33
-		          NachOS_Listen();
+		NachOS_Listen();
                break;
              case SC_Accept:	// System call # 32
-		          NachOS_Accept();
+		NachOS_Accept();
                break;
              case SC_Shutdown:	// System call # 33
-		          NachOS_Shutdown();
+		NachOS_Shutdown();
                break;
 
              default:
@@ -857,15 +858,8 @@ ExceptionHandler(ExceptionType which)
           stats->numPageFaults++;
           int badVAddr = machine->ReadRegister(BadVAddrReg); // The failing virtual address is now in register 39
           int vpn = badVAddr / PageSize; // The virtual page number is the virtual address divided by the page size
-          TranslationEntry *entry = invertedPageTable->getEntry(vpn);
-            if (entry == nullptr) {
-               entry = invertedPageTable->getFromSwap(vpn);
-               if (entry == nullptr) {
-                  entry = invertedPageTable->getFromExecutable(vpn);
-               }
-            }
-          invertedPageTable->updateTLB(entry);
-
+          DEBUG('u', "PageFaultException: %d\n", vpn);
+          currentThread->space->LoadPage(vpn, currentThread->getThreadID());
           break;
        }
 

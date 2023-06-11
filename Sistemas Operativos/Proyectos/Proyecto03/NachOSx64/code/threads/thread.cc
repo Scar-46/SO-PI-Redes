@@ -299,6 +299,18 @@ Thread::SaveUserState()
 	userRegisters[i] = machine->ReadRegister(i);
 }
 
+void 
+Thread::setThreadID(int id)
+{
+    threadID = id;
+}
+
+int 
+Thread::getThreadID()
+{
+    return threadID;
+}
+
 //----------------------------------------------------------------------
 // Thread::RestoreUserState
 //	Restore the CPU state of a user program on a context switch.

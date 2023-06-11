@@ -26,8 +26,8 @@ Condition * condArray[10];
 BitMap * semsBitMap = new BitMap(10);
 BitMap * locksBitMap = new BitMap(10);
 BitMap * condsBitMap = new BitMap(10);
-
-
+// Swap file for swapping pages
+SwapFile * swapFile = new SwapFile();
 // Inverted page table
 InvertedPageTable * invertedPageTable = new InvertedPageTable();
 
@@ -54,10 +54,6 @@ BitMap * MyMap;
 PostOffice *postOffice;
 #endif
 
-// System swap file
-fileSystem->Create("SWAP", 0);
-OpenFile* swapFile = fileSystem->Open("SWAP");
-BitMap * swapMap = new BitMap(NumPhysPages * 2);
 
 // External definition, to allow us to take a pointer to this function
 extern void Cleanup();
@@ -245,13 +241,7 @@ Cleanup()
     delete timer;
     delete scheduler;
     delete interrupt;
-    // Delete semaphores, locks and conditions
-    delete  semsBitMap;
-    delete  locksBitMap;
-    delete  condsBitMap;
-    // Delete swap file and swap map
     delete swapFile;
-    delete swapMap;
     delete invertedPageTable;
 
     Exit(0);

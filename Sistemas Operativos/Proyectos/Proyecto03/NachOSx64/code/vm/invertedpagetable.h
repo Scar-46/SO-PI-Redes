@@ -8,29 +8,39 @@
 #include <stdio.h>
 #include "bitmap.h"
 #include "translate.h"
+#include "machine.h"
+#include "swap.h"
+
+#define NumPhysPages 32
 
 #ifndef INVERTED_PAGE_TABLE
+#define INVERTED_PAGE_TABLE
+
+
+typedef struct {
+  int threadID;
+  TranslationEntry * entry;
+} IPTEntry;
+
 
 class InvertedPageTable {
   public:
     InvertedPageTable();						// Initialize
     ~InvertedPageTable();						// De-allocate
-    
-    void addEntry(TranslationEntry * entry);		// Add an entry to the table
-    void removeEntry(int pageFrame);			// Remove an entry from the table
-    TranslationEntry * getEntry(int pageFrame);	// Get an entry from the table
-    int searchVictim();							// Search for a victim
 
-    void updateTLB(TranslationEntry * entry);	// Update the TLB
-    void getFromSwap(int pageFrame);// Get an entry from the swap file
-    void getFromExecutable(int pageFrame)                          ; // Get an entry from the executable file
-
-
+    int allocateFrame(TranslationEntry * entry, int threadID);	// Allocate a frame for a page
+    void deallocateFrame(int frame);					// Deallocate a frame
+    int getFrame(TranslationEntry * entry, int threadID);	// Get the frame of a page
+    int searchVictim();							// Search for a victim to swap out
+    int checkSwapFile(int vpn, int threadID);				// Check if a page is in the swap file
+    void swapIn(int vpn, int ppn, int threadID);			// Swap in a page
     
   private:
-    TranslationEntry * table[NumPhysPages];		// The table itself
+    IPTEntry * table;							// The table itself
     BitMap * tableMap;							// A bitmap to keep track of the entries
     int nextVictim;								// The next victim to be swapped out
+    // Swap file for swapping pages
+    SwapFile * swapFile;
 };
 
 #endif // INVERTED_PAGE_TABLE

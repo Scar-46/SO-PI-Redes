@@ -27,16 +27,20 @@ class AddrSpace {
     ~AddrSpace();			// De-allocate an address space
 
     void InitRegisters();		// Initialize user-level CPU registers,
-					// before jumping to user code
-    void SetExec(OpenFile *executable); // Set the executable file TODO(): Check if this is necessary
-    int SecondChance(int page); // Second chance algorithm
+					// before jumping to user code     
+    void LoadPage(int virtualPageNumber, int threadID);	// Load a page into physical memory
+    void setFilename(const char* filename);	// Set the name of the executable file
+    void setSpaceID(int ID);		// Set the ID of the address space
+
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch 
+
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 					// for now!
     unsigned int numPages;		// Number of pages in the virtual 
-    OpenFile *exec; //TODO(): Check if this is necessary
+    const char* filename;			// Name of the executable file
+    int spaceID;			// The ID of the father address space
 					// address space
 };
 

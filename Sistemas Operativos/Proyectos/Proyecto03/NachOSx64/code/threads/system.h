@@ -18,6 +18,7 @@
 #include "bitmap.h"
 #include "synch.h"
 #include "invertedpagetable.h"
+#include "swap.h"
 
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); 	// Initialization,
@@ -31,8 +32,6 @@ extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
 extern Timer *timer;				// the hardware alarm clock
-
-// Synchronization tools
 extern Semaphore * semArray[10];
 extern Lock * lockArray[10];
 extern Condition * condArray[10];
@@ -40,10 +39,8 @@ extern BitMap * semsBitMap;
 extern BitMap * locksBitMap;
 extern BitMap * condsBitMap;
 
-// System swap file
-extern OpenFile* swapFile;
-extern BitMap * swapMap;
-
+// Swap file
+extern SwapFile * swapFile;
 // Inverted page table
 extern InvertedPageTable * invertedPageTable;
 

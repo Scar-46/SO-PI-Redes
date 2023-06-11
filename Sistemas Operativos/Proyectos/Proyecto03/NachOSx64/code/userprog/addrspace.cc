@@ -75,7 +75,9 @@ AddrSpace::AddrSpace(OpenFile *executable)
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    ASSERT(numPages <= (unsigned) MyMap->NumClear());		// check we're not trying
+	#ifndef VM
+    	ASSERT(numPages <= (unsigned) MyMap->NumClear());		// check we're not trying
+	#endif
 						// to run anything too big --
 						// at least until we have
 						// virtual memory
@@ -231,4 +233,41 @@ void AddrSpace::RestoreState()
 	#endif
 }
 
+void AddrSpace::LoadPage(int vpn, int threadID){
+	int physicalPageNumber = invertedPageTable->getFrame(&pageTable[vpn], threadID);
+	if (physicalPageNumber == -1) {
+		if (invertedPageTable->checkSwapFile(vpn, threadID)) {
+			printf("swap in\n");
+			physicalPageNumber = invertedPageTable->allocateFrame(&pageTable[vpn], threadID);
+			invertedPageTable->swapIn(vpn, physicalPageNumber, threadID);
+		}
+		else {
+			physicalPageNumber = invertedPageTable->allocateFrame(&pageTable[vpn], threadID);
+			OpenFile* executable = fileSystem->Open(this->filename);
+			char* into = &(machine->mainMemory[physicalPageNumber * PageSize]);
+			int from = sizeof(NoffHeader) + vpn * PageSize;
+			bzero(into, PageSize);
+			executable->ReadAt(into, PageSize, from);
+			delete executable;
+		}
+	}
+	int i;
+    for ( i = 0; i < TLBSize; i++) {
+        if (!machine->tlb[i].valid) {
+            break;
+        }
+    }
+    if (i == TLBSize) {
+        i = Random() % TLBSize;
+    }
+    machine->tlb[i] = pageTable[vpn];
 
+}
+
+void AddrSpace::setFilename(const char* filename){
+	this->filename = filename;
+}
+
+void AddrSpace::setSpaceID(int spaceID){
+	this->spaceID = spaceID;
+}

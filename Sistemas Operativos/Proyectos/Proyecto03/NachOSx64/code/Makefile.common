@@ -101,9 +101,11 @@ USERPROG_C = ../userprog/addrspace.cc\
 USERPROG_O = addrspace.o exception.o progtest.o console.o machine.o \
 	mipssim.o translate.o bitmap.o
 
-VM_H = ../vm/invertedpagetable.h
-VM_C =  ../vm/invertedpagetable.cc
-VM_O =  invertedpagetable.o
+VM_H = ../vm/invertedpagetable.h\
+	../vm/swap.h
+VM_C =  ../vm/invertedpagetable.cc\
+	../vm/swap.cc
+VM_O =  invertedpagetable.o swap.o
 
 FILESYS_H =../filesys/directory.h \
 	../filesys/filehdr.h\

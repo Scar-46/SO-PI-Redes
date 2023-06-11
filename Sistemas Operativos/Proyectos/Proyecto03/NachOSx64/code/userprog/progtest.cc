@@ -30,7 +30,9 @@ StartProcess(const char *filename)
 	printf("Unable to open file %s\n", filename);
 	return;
     }
-    space = new AddrSpace(executable);    
+    space = new AddrSpace(executable);
+    space->setFilename(filename);
+    space->setSpaceID(currentThread->getThreadID());   
     currentThread->space = space;
 
     delete executable;			// close file
@@ -81,8 +83,4 @@ ConsoleTest (const char *in, const char *out)
 	writeDone->P() ;        // wait for write to finish
 	if (ch == 'q') return;  // if q, quit
     }
-}
-void SetExec(OpenFile *executable)
-{
-	exec = executable;
 }
