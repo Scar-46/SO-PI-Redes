@@ -17,6 +17,7 @@
 #include "timer.h"
 #include "bitmap.h"
 #include "synch.h"
+
 #include "invertedpagetable.h"
 #include "swap.h"
 
@@ -39,10 +40,8 @@ extern BitMap * semsBitMap;
 extern BitMap * locksBitMap;
 extern BitMap * condsBitMap;
 
-// Swap file
-extern SwapFile * swapFile;
-// Inverted page table
-extern InvertedPageTable * invertedPageTable;
+extern InvertedTable* inverMap;
+extern SwapFile* swapFile;
 
 #ifdef USER_PROGRAM
 #include "machine.h"

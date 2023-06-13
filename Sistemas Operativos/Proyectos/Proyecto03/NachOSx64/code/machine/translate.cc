@@ -95,8 +95,9 @@ Machine::ReadMem(int addr, int size, int *value)
     
     exception = Translate(addr, &physicalAddress, size, false);
     if (exception != NoException) {
-	machine->RaiseException(exception, addr);
-	return false;
+		machine->RaiseException(exception, addr);
+		return false;
+
     }
     switch (size) {
       case 1:
@@ -145,7 +146,7 @@ Machine::WriteMem(int addr, int size, int value)
     exception = Translate(addr, &physicalAddress, size, true);
     if (exception != NoException) {
 	machine->RaiseException(exception, addr);
-	return false;
+		return false;
     }
     switch (size) {
       case 1:
@@ -223,6 +224,9 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
         for (entry = NULL, i = 0; i < TLBSize; i++)
     	    if (tlb[i].valid && (tlb[i].virtualPage == (int)vpn)) {
 		entry = &tlb[i];			// FOUND!
+		#ifdef VM
+				inverMap->updatePageUsage(tlb[i].physicalPage, false);
+		#endif
 		break;
 	    }
 	if (entry == NULL) {				// not found

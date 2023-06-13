@@ -5,42 +5,39 @@
 // All rights reserved.  See copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
-#include <stdio.h>
 #include "bitmap.h"
-#include "translate.h"
 #include "machine.h"
-#include "swap.h"
+#include "addrspace.h"
+#include "thread.h"
+
+#include <iostream>
+#include <vector>
 
 #define NumPhysPages 32
 
 #ifndef INVERTED_PAGE_TABLE
 #define INVERTED_PAGE_TABLE
 
-
 typedef struct {
-  int threadID;
-  TranslationEntry * entry;
-} IPTEntry;
+    AddrSpace* threadSp;
+    int virtualPage;
+    int usage;
+} Page;
 
+class InvertedTable {
+ public:
+    InvertedTable(); // constructor
+    ~InvertedTable(); // destructor
 
-class InvertedPageTable {
-  public:
-    InvertedPageTable();						// Initialize
-    ~InvertedPageTable();						// De-allocate
-
-    int allocateFrame(TranslationEntry * entry, int threadID);	// Allocate a frame for a page
-    void deallocateFrame(int frame);					// Deallocate a frame
-    int getFrame(TranslationEntry * entry, int threadID);	// Get the frame of a page
-    int searchVictim();							// Search for a victim to swap out
-    int checkSwapFile(int vpn, int threadID);				// Check if a page is in the swap file
-    void swapIn(int vpn, int ppn, int threadID);			// Swap in a page
+    int getPhysicalPage(int virtualPage); // returns physical page number or -1 if not found
+    int searchPage(int page); // returns physical page number or -1 if not found
+    int getLeastUsedPage(); // returns the least used page
+    void updatePageUsage(int pageNum, bool reset); // updates the usage of a page
+    void restorePages(); // restores all pages that belong to the thread
     
   private:
-    IPTEntry * table;							// The table itself
-    BitMap * tableMap;							// A bitmap to keep track of the entries
-    int nextVictim;								// The next victim to be swapped out
-    // Swap file for swapping pages
-    SwapFile * swapFile;
+    BitMap* physicalMap; 
+    Page* tableEntry;
 };
 
 #endif // INVERTED_PAGE_TABLE

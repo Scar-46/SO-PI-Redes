@@ -1,75 +1,73 @@
 #include "invertedpagetable.h"
+#include "bitmap.h"
+#include "addrspace.h"
+#include "../machine/machine.h"
+#include "../threads/system.h"
 
-InvertedPageTable::InvertedPageTable() {
-    tableMap = new BitMap(NumPhysPages);
-    table = new IPTEntry[NumPhysPages];
-    swapFile = new SwapFile();
-    nextVictim = 0;
+InvertedTable::InvertedTable(){
+    this->tableEntry = new Page[NumPhysPages];
+    this->physicalMap = new BitMap(NumPhysPages);
+} 
+
+InvertedTable::~InvertedTable() {
+    delete this->physicalMap;
+    delete[] this->tableEntry;
 }
 
-InvertedPageTable::~InvertedPageTable() {
-    delete tableMap;
-    delete table;
-    delete swapFile;
+int InvertedTable::searchPage(int virtualPage) {
+    // find an available page on the inverted table
+    int physicalPage = this->physicalMap->Find();
+
+    // if all pages used
+    if (physicalPage == -1) {
+        // find least used and set it to be replaced
+        physicalPage = this->getLeastUsedPage();
+        this->tableEntry[physicalPage].threadSp->Swap(physicalPage, this->tableEntry[physicalPage].virtualPage); // swap page
+    }
+    // set virtual virtual page on vector
+    this->tableEntry[physicalPage].virtualPage = virtualPage;
+    this->tableEntry[physicalPage].threadSp = currentThread->space;
+
+    return physicalPage;
 }
 
-int InvertedPageTable::searchVictim() {
-    // Searches for a victim
-    int victim = nextVictim;
-    do {
-        if (table[victim].entry->use) {
-            table[victim].entry->use = false;
+void InvertedTable::updatePageUsage(int pageNum, bool reset) {
+    if (reset) {
+        this->tableEntry[pageNum].usage = 0;
+    } else {
+        if (this->tableEntry[pageNum].usage >= 2048) {
+            this->tableEntry[pageNum].usage = 0;
         } else {
-            printf("Victim found: %d\n", victim);
-            nextVictim = (victim + 1) % NumPhysPages;
-            return victim;
-        }
-        victim = (victim + 1) % NumPhysPages;
-    } while (victim != nextVictim);
-    return -1;
-}
-
-
-int InvertedPageTable::allocateFrame(TranslationEntry * entry, int threadID) {
-    int frame = tableMap->Find();
-    if (frame == -1) {
-        printf("No free frames\n");
-        frame = searchVictim();
-        deallocateFrame(frame);
-        tableMap->Mark(frame);
-    }
-    table[frame].threadID = threadID;
-    table[frame].entry = entry;
-    table[frame].entry->physicalPage = frame;
-    table[frame].entry->valid = true;
-
-    return frame;
-}
-
-void InvertedPageTable::deallocateFrame(int frame) {
-    tableMap->Clear(frame);
-    printf("Deallocating frame %d\n", frame);
-    table[frame].entry->valid = false;
-    if (table[frame].entry->dirty) {
-        // Write to swap file
-        printf("swap out\n");
-        swapFile->writeToSwapSpace(table[frame].entry->virtualPage, frame, table[frame].threadID);
-    }
-}
-
-int InvertedPageTable::getFrame(TranslationEntry * entry, int threadID) {
-    for (int i = 0; i < NumPhysPages; i++) {
-        if (table[i].entry == entry && table[i].threadID == threadID) {
-            return i;
+            this->tableEntry[pageNum].usage += 1;
         }
     }
-    return -1;
 }
 
-int InvertedPageTable::checkSwapFile(int vpn, int threadID) {
-    return swapFile->inSwapSpace(vpn, threadID);
+void InvertedTable::restorePages() {
+    // Iterate over all pages in the tlb
+    for (int virtualPage = 0; virtualPage < TLBSize; virtualPage++) {
+        // if the virtualPage belongs to the current space
+        if (this->tableEntry[machine->tlb[virtualPage].physicalPage].threadSp == currentThread->space) {
+            // set the page as valid
+            machine->tlb[virtualPage].valid = true;
+        }
+    }
 }
 
-void InvertedPageTable::swapIn(int vpn, int ppn, int threadID) {
-    swapFile->readFromSwapSpace(vpn, ppn, threadID);
+int InvertedTable::getLeastUsedPage() {
+    int lowestPos = 0;
+    int tempUsage = 0;
+    int lowestUsage = this->tableEntry[lowestUsage].usage;
+
+    // for all pages, check which has the lower amount of calls
+    for (int virtualPage = 1; virtualPage < NumPhysPages; virtualPage++) {
+        tempUsage = this->tableEntry[virtualPage].usage;
+        if (tempUsage < lowestUsage) {  // if the current page has less calls
+            lowestPos = virtualPage;
+            lowestUsage = tempUsage;
+        }
+    }
+    this->tableEntry[lowestUsage].usage = 0;  // reset usage of the page
+
+    return lowestPos;
 }

@@ -1,36 +1,28 @@
 #include "swap.h"
 
 SwapFile::SwapFile() {
-    for (int i = 0; i < NUMBER_OF_PAGES; i++) {
-        swapMap[i] = false;
-    }
-  	fileSystem->Create(SWAP_FILE_NAME, NUMBER_OF_PAGES * PageSize);
-	swapFile = fileSystem->Open(SWAP_FILE_NAME);
+    // Create the swap file
+    fileSystem->Create(SWAP_FILE_NAME, NUMBER_OF_PAGES * PageSize);
+    // Open the swap file
+    this->swapFile = fileSystem->Open(SWAP_FILE_NAME);
+    // Create the bitmap
+    this->swapMap = new BitMap(NUMBER_OF_PAGES);
 }
 
 SwapFile::~SwapFile() {
-  delete swapFile;
-  fileSystem->Remove(SWAP_FILE_NAME);
+    delete this->swapFile;
 }
 
-void SwapFile::writeToSwapSpace(int vpn, int ppn, int threadID) {
-    char* from = machine->mainMemory + ppn * PageSize;
-    int into = vpn * PageSize;
-
-    swapFile->WriteAt(from, PageSize, into);
-    swapMap[vpn] = true;
-    threadMap[vpn] = threadID;
+void SwapFile::writeToSwap(int virtPage, int physPage) {
+    swapFile->WriteAt(&(machine->mainMemory[physPage * PageSize]), PageSize, virtPage * PageSize);
+    swapMap->Mark(virtPage);
 }
 
-void SwapFile::readFromSwapSpace(int vpn, int ppn, int threadID) {
-    char* into = machine->mainMemory + ppn * PageSize;
-    int from = vpn * PageSize;
-
-    swapFile->ReadAt(into, PageSize, from);
-    swapMap[vpn] = false;
-    threadMap[vpn] = -1;
+void SwapFile::readFromSwap(int virtPage, int physPage) {
+    swapFile->ReadAt(&(machine->mainMemory[physPage * PageSize]), PageSize, virtPage * PageSize);
+    swapMap->Clear(virtPage);
 }
 
-bool SwapFile::inSwapSpace(int vpn, int threadID) {
-    return swapMap[vpn] && threadMap[vpn] == threadID;
+bool SwapFile::inSwap(int vpn) {
+    return swapMap->Test(vpn);
 }

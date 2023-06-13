@@ -87,11 +87,12 @@ AddrSpace::AddrSpace(OpenFile *executable)
 // first, set up the translation 
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
-	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
 	#ifdef VM
+	  pageTable[i].virtualPage = -1;	// for now, virtual page # = phys page #
 	  pageTable[i].physicalPage = -1;
       pageTable[i].valid = false;
    #else
+  	  pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
    	  pageTable[i].physicalPage = MyMap->Find(); // find a free physical page
       pageTable[i].valid = true;
    #endif
@@ -139,20 +140,32 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
 AddrSpace::AddrSpace (AddrSpace* fatherSpace) {
 	int stackSize = divRoundUp (UserStackSize, PageSize);
+	this->filename = fatherSpace->filename;
 	numPages = fatherSpace->numPages;
-	ASSERT (numPages <= (unsigned int) MyMap->NumClear()); // Check if there is enough space for the new process
-
+    #ifndef VM
+	    ASSERT (numPages <= (unsigned int) MyMap->NumClear()); // Check if there is enough space for the new process
+    #endif
 	pageTable = new TranslationEntry[numPages];
 	for (unsigned int i = 0; i < numPages; ++i) {
 		pageTable[i].virtualPage = i;
+        pageTable[i].valid = true;
+		#ifdef VM
+			pageTable[i].virtualPage = fatherSpace->pageTable[i].virtualPage;
+        #endif
 		if (i < (numPages - stackSize) ) {  // if it is not the stack
 			pageTable[i].physicalPage = fatherSpace->pageTable[i].physicalPage; // father and child share the same physical page
 		}
 		else {
-			pageTable[i].physicalPage = MyMap->Find(); // find a free physical page
-			bzero (& (machine->mainMemory[pageTable[i].physicalPage * PageSize]), PageSize);
+			#ifndef VM
+				pageTable[i].physicalPage = MyMap->Find(); // find a free physical page
+				bzero (& (machine->mainMemory[pageTable[i].physicalPage * PageSize]), PageSize);
+			#else
+				pageTable[i].virtualPage = -1;
+				pageTable[i].physicalPage = -1;
+				pageTable[i].valid = false;
+			#endif
+
 		}
-		pageTable[i].valid = true;
 		pageTable[i].use = false;
 		pageTable[i].dirty = false;
 		pageTable[i].readOnly = false;
@@ -227,47 +240,88 @@ void AddrSpace::SaveState()
 
 void AddrSpace::RestoreState() 
 {
-	#ifndef VM
-		machine->pageTable = pageTable;
-    	machine->pageTableSize = numPages;
-	#endif
+    #ifndef VM
+        machine->pageTable = pageTable;
+        machine->pageTableSize = numPages;
+    #else
+        inverMap->restorePages();
+    #endif
 }
 
-void AddrSpace::LoadPage(int vpn, int threadID){
-	int physicalPageNumber = invertedPageTable->getFrame(&pageTable[vpn], threadID);
-	if (physicalPageNumber == -1) {
-		if (invertedPageTable->checkSwapFile(vpn, threadID)) {
-			printf("swap in\n");
-			physicalPageNumber = invertedPageTable->allocateFrame(&pageTable[vpn], threadID);
-			invertedPageTable->swapIn(vpn, physicalPageNumber, threadID);
-		}
-		else {
-			physicalPageNumber = invertedPageTable->allocateFrame(&pageTable[vpn], threadID);
-			OpenFile* executable = fileSystem->Open(this->filename);
-			char* into = &(machine->mainMemory[physicalPageNumber * PageSize]);
-			int from = sizeof(NoffHeader) + vpn * PageSize;
-			bzero(into, PageSize);
-			executable->ReadAt(into, PageSize, from);
-			delete executable;
-		}
-	}
-	int i;
-    for ( i = 0; i < TLBSize; i++) {
-        if (!machine->tlb[i].valid) {
-            break;
-        }
-    }
-    if (i == TLBSize) {
-        i = Random() % TLBSize;
-    }
-    machine->tlb[i] = pageTable[vpn];
-
-}
-
-void AddrSpace::setFilename(const char* filename){
+void AddrSpace::SetFilename(const char* filename){
 	this->filename = filename;
 }
 
-void AddrSpace::setSpaceID(int spaceID){
-	this->spaceID = spaceID;
+
+int AddrSpace::GetPhysicalPage(int virtualPage) {
+    int virtPageLocation = -1;
+    if (this->pageTable[virtualPage].virtualPage != -1) {
+        virtPageLocation = this->pageTable[virtualPage].virtualPage;
+    }
+    return virtPageLocation;
 }
+
+
+void AddrSpace::MoveIntoTLB(TranslationEntry* tableToReplace, int virtTablePos) {
+    this->pageTable[virtTablePos].valid = true;
+    tableToReplace->physicalPage = (this->pageTable)[virtTablePos].physicalPage;
+    tableToReplace->virtualPage = (this->pageTable)[virtTablePos].virtualPage;
+    tableToReplace->valid = (this->pageTable)[virtTablePos].valid;
+
+	// update the page usage
+    inverMap->updatePageUsage((this->pageTable)[virtTablePos].physicalPage, true);
+}
+
+int AddrSpace::LoadFromMem(int virtualPage) {
+    int physicalPage = inverMap->searchPage(virtualPage);  // search for a free physical page
+
+    // set page table
+    this->pageTable[virtualPage].physicalPage = physicalPage;
+    this->pageTable[virtualPage].virtualPage = virtualPage;
+    this->pageTable[virtualPage].valid = true;
+
+    // read from executable
+    int ppn = this->pageTable[virtualPage].physicalPage;
+    OpenFile* executable = fileSystem->Open(this->filename);
+    executable->ReadAt(&(machine->mainMemory[ppn * PageSize]), PageSize, sizeof(NoffHeader) + virtualPage * PageSize);
+    delete executable;
+
+    return virtualPage;
+}
+
+int AddrSpace::LoadFromSwap(int virtualPage) {
+    int physicalPage = inverMap->searchPage(virtualPage); // search for a free physical page
+    swapFile->readFromSwap(virtualPage, physicalPage); // read from swap
+ 
+    // set page table
+    this->pageTable[virtualPage].physicalPage = physicalPage;
+    this->pageTable[virtualPage].virtualPage = virtualPage;
+    this->pageTable[virtualPage].valid = true;
+
+    return virtualPage;
+}
+
+void AddrSpace::SavePageState(int virtualPageState, TranslationEntry* TLBEntry) {
+    this->pageTable[virtualPageState].use = TLBEntry->use;
+    this->pageTable[virtualPageState].dirty = TLBEntry->use;
+}
+
+void AddrSpace::Swap(int physicalPage, int virtualPage) {
+    // remove from TLB
+    for (int entry = 0; entry < TLBSize; entry++) {
+        if (machine->tlb[entry].virtualPage == virtualPage) {
+            machine->tlb[entry].virtualPage = -1;
+            machine->tlb[entry].physicalPage = -1;
+            machine->tlb[entry].valid = false;
+        }
+    }
+	// remove from page table
+	this->pageTable[virtualPage].physicalPage = -1;
+    this->pageTable[virtualPage].virtualPage = -1;
+    this->pageTable[virtualPage].valid = false;
+
+
+    // load page onto swap
+    swapFile->writeToSwap(virtualPage, physicalPage);
+}
+

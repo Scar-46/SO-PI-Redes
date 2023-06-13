@@ -26,10 +26,8 @@ Condition * condArray[10];
 BitMap * semsBitMap = new BitMap(10);
 BitMap * locksBitMap = new BitMap(10);
 BitMap * condsBitMap = new BitMap(10);
-// Swap file for swapping pages
-SwapFile * swapFile = new SwapFile();
-// Inverted page table
-InvertedPageTable * invertedPageTable = new InvertedPageTable();
+InvertedTable* inverMap = new InvertedTable();
+SwapFile* swapFile = new SwapFile();
 
 					// for invoking context switches
 					
@@ -241,9 +239,7 @@ Cleanup()
     delete timer;
     delete scheduler;
     delete interrupt;
-    delete swapFile;
-    delete invertedPageTable;
-
+    
     Exit(0);
 }
 

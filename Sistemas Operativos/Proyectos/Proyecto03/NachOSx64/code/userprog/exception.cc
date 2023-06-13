@@ -49,12 +49,13 @@ void returnFromSystemCall() {
 }  // returnFromSystemCall
 
 void reading (char* buffer, int reg) {
-
-	int character = 1;
-	for (int i = 0; character != '\0'; ++i) {
-		machine->ReadMem(machine->ReadRegister(reg) + i, 1, &character);
-		buffer[i] = (char) character;
-	}
+   int addr = machine->ReadRegister(reg);
+   int i = 0;
+   do {
+      if(!machine->ReadMem(addr + i, 1, (int*)&buffer[i])) {
+         machine->ReadMem(addr + i, 1, (int*)&buffer[i]); // first read may fail if address is not mapped yet
+      }
+   } while(buffer[i++] != '\0');
 
 } // reading 
 
@@ -75,6 +76,7 @@ void NachOS_Halt() {		// System call 0
 void NachOS_Exit() {		// System call 1
    DEBUG('a', "Exit, initiated by user program.\n");
    int status = machine->ReadRegister(4);
+   printf("Exit status: %d\n", status);
    if (currentThread->openFilesTable->getUsage() == 0) {
       NachOS_Halt();
    }
@@ -101,6 +103,7 @@ void execAux (void* executableName) {
 		return;
 	}
 	currentThread->space = new AddrSpace (executable); // create a new address space
+   currentThread->space->SetFilename((char*)executableName); // set the filename
 	currentThread->space->InitRegisters(); // set the initial register values
 	currentThread->space->RestoreState();  // load page table register
 	machine->Run(); // jump to the user progam
@@ -161,7 +164,6 @@ void NachOS_Create() {		// System call 4
    DEBUG('a', "Create file, initiated by user program.\n");
    char buffer[BUFFERSIZE];
    reading (buffer, 4);
-   printf("Creating file %s\n", buffer);
    int idFileUnix = creat(buffer, 0666); // 0666: Read and write permission for owner, group, and others
    if (idFileUnix == ERROR) {
       printf("Unable to create file %s\n", buffer);
@@ -183,7 +185,6 @@ void NachOS_Open() {		// System call 5
    DEBUG('a', "Open file, initiated by user program.\n");
    char buffer[BUFFERSIZE];
    reading (buffer, 4);
-   
    int idFileUnix = open(buffer, O_RDWR); // O_RDWR: Open for reading and writing. The file is created if it does not exist.
 
    if (idFileUnix == ERROR) {
@@ -261,8 +262,10 @@ void NachOS_Read() {		// System call 7
       case  ConsoleInput:	// User can read from standard input
          numRead = read(0, buffer, size);
          machine->WriteRegister( 2, numRead );
-         for (int i = 0; i < numRead; ++i) {
-            machine->WriteMem(machine->ReadRegister(4) + i, 1, buffer[i]);
+          for (int i = 0; i < numRead; ++i) {
+            if (!machine->WriteMem(machine->ReadRegister(4) + i, 1, buffer[i])) {
+               machine->WriteMem(machine->ReadRegister(4) + i, 1, buffer[i]);
+            }
          }
          stats->numConsoleCharsRead += numRead;
          break;
@@ -278,9 +281,10 @@ void NachOS_Read() {		// System call 7
             int idFileUnix = currentThread->openFilesTable->getUnixHandle(descriptor);
             numRead = read(idFileUnix, buffer, size);
             machine->WriteRegister(2, numRead);
-            bool flag;
-            for (int i = 0; i < numRead; ++i && flag) {
-               flag = machine->WriteMem(machine->ReadRegister(4) + i, 1, buffer[i]); //TODO: check if it is correct
+            for (int i = 0; i < numRead; ++i) {
+               if (!machine->WriteMem(machine->ReadRegister(4) + i, 1, buffer[i])) {
+                  machine->WriteMem(machine->ReadRegister(4) + i, 1, buffer[i]);
+               }
             }
             stats->numDiskReads++;
          } else {
@@ -576,7 +580,7 @@ void NachOS_CondWait() {		// System call 22
 void NachOS_CondBroadcast() {		// System call 23
    DEBUG( 'u', "Entering CondBroadcast System call\n" );
    int condId = machine->ReadRegister( 4 );
-   int lockId = machine->ReadRegister( 5 ); // TODO: check if this is correct
+   int lockId = machine->ReadRegister( 5 );
    int status = ERROR;
    if ( condsBitMap->Test( condId ) ) {
       status = 0;
@@ -719,6 +723,50 @@ void NachOS_Shutdown() {	// System call 25
    DEBUG( 'u', "Exiting Shutdown System call\n" );
 }
 
+TranslationEntry* findTLBEntry() {
+   int i;
+   for ( i = 0; i < TLBSize; i++) {
+      if (!machine->tlb[i].valid) {
+         // found an invalid entry
+         break;
+      }
+   }
+   if (i == TLBSize) {
+      i = Random() % TLBSize;
+   }
+   return &(machine->tlb[i]);
+}
+
+void updateTLB(int physicalPage) {
+   TranslationEntry* replaceEntry = findTLBEntry();
+
+   if(replaceEntry->valid) { // if the entry is valid (belongs to the current process)
+      // save the page state in the page table
+      currentThread->space->SavePageState(replaceEntry->physicalPage, replaceEntry);
+   }
+   // update the TLB entry
+   currentThread->space->MoveIntoTLB(replaceEntry, physicalPage);
+}
+
+void NachOS_PageFault() {
+   stats->numPageFaults++; // increment page faults
+   int badAddr = machine->ReadRegister(BadVAddrReg);
+   int vpn = badAddr / PageSize; // virtual page number of the faulting address
+   // check if the page is in the inverted page table
+   int ppn = currentThread->space->GetPhysicalPage(vpn);
+   // if not found, check if it is in the swap file or in the executable
+   if (ppn == -1) {
+      if (swapFile->inSwap(vpn)) {
+         // if found in swap, load from swap
+         ppn = currentThread->space->LoadFromSwap(vpn);
+      } else {
+         // if not found, load from storage
+         ppn = currentThread->space->LoadFromMem(vpn);
+      }
+   }
+   updateTLB(ppn);
+}
+
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -855,11 +903,7 @@ ExceptionHandler(ExceptionType which)
           break;
 
        case PageFaultException: {
-          stats->numPageFaults++;
-          int badVAddr = machine->ReadRegister(BadVAddrReg); // The failing virtual address is now in register 39
-          int vpn = badVAddr / PageSize; // The virtual page number is the virtual address divided by the page size
-          DEBUG('u', "PageFaultException: %d\n", vpn);
-          currentThread->space->LoadPage(vpn, currentThread->getThreadID());
+            NachOS_PageFault();
           break;
        }
 

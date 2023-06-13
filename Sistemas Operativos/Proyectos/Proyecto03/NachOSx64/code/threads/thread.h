@@ -112,7 +112,7 @@ class Thread {
 
   private:
     // some of the private data for this class is listed above
-    int threadID = 0;              // Thread ID
+    
     HostMemoryAddress* stack; 		// Bottom of the stack 
 					// NULL if this is the main thread
 					// (If NULL, don't deallocate stack)
@@ -133,9 +133,7 @@ class Thread {
   public:
     void SaveUserState();		// save user-level register state
     void RestoreUserState();		// restore user-level register state
-    int getThreadID();         // get thread ID
-    void setThreadID(int id);  // set thread ID
-    
+
     AddrSpace *space;			// User code this thread is running.
 #endif
 };
