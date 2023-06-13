@@ -22,7 +22,8 @@ int InvertedTable::searchPage(int virtualPage) {
     if (physicalPage == -1) {
         // find least used and set it to be replaced
         physicalPage = this->getLeastUsedPage();
-        this->tableEntry[physicalPage].threadSp->Swap(physicalPage, this->tableEntry[physicalPage].virtualPage); // swap page
+        AddrSpace* space = this->tableEntry[physicalPage].threadSp;
+        space->Swap(physicalPage, this->tableEntry[physicalPage].virtualPage); // swap page
     }
     // set virtual virtual page on vector
     this->tableEntry[physicalPage].virtualPage = virtualPage;
@@ -47,7 +48,8 @@ void InvertedTable::restorePages() {
     // Iterate over all pages in the tlb
     for (int virtualPage = 0; virtualPage < TLBSize; virtualPage++) {
         // if the virtualPage belongs to the current space
-        if (this->tableEntry[machine->tlb[virtualPage].physicalPage].threadSp == currentThread->space) {
+        int physicalPage = machine->tlb[virtualPage].physicalPage;
+        if (this->tableEntry[physicalPage].threadSp == currentThread->space) {
             // set the page as valid
             machine->tlb[virtualPage].valid = true;
         }
