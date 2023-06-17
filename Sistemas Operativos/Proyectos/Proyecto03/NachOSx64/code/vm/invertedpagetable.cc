@@ -44,18 +44,6 @@ void InvertedTable::updatePageUsage(int pageNum, bool reset) {
     }
 }
 
-void InvertedTable::restorePages() {
-    // Iterate over all pages in the tlb
-    for (int virtualPage = 0; virtualPage < TLBSize; virtualPage++) {
-        // if the virtualPage belongs to the current space
-        int physicalPage = machine->tlb[virtualPage].physicalPage;
-        if (this->tableEntry[physicalPage].threadSp == currentThread->space) {
-            // set the page as invalid
-            machine->tlb[virtualPage].valid = false;
-        }
-    }
-}
-
 int InvertedTable::getLeastUsedPage() {
     int lowestPos = 0;
     int tempUsage = 0;

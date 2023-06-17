@@ -76,7 +76,6 @@ void NachOS_Halt() {		// System call 0
 void NachOS_Exit() {		// System call 1
    DEBUG('a', "Exit, initiated by user program.\n");
    int status = machine->ReadRegister(4);
-   printf("Exit status: %d\n", status);
    if (currentThread->openFilesTable->getUsage() == 0) {
       NachOS_Halt();
    }
@@ -95,15 +94,18 @@ void NachOS_Exit() {		// System call 1
 } // NachOS_Exit
 
 
-void execAux (void* executableName) {
+void execAux (void* filename) {
    DEBUG('a', "Exec aux, initiated by user program.\n");
-	OpenFile *executable = (OpenFile *) executableName;
+	char* filenameAux = (char*) filename;
+   OpenFile *executable = fileSystem->Open(filenameAux);
 	if (executable == NULL) {
 		printf ("Unable to open file");
+      delete executable;
 		return;
 	}
 	currentThread->space = new AddrSpace (executable); // create a new address space
-   currentThread->space->SetFilename((char*)executableName); // set the filename
+   currentThread->space->SetFilename((char*)filenameAux); // set the filename
+   delete executable;
 	currentThread->space->InitRegisters(); // set the initial register values
 	currentThread->space->RestoreState();  // load page table register
 	machine->Run(); // jump to the user progam
@@ -117,20 +119,13 @@ void execAux (void* executableName) {
  */
 void NachOS_Exec() {		// System call 2
    DEBUG('a', "Exec, initiated by user program.\n");
-   char buffer[BUFFERSIZE];
+   char* buffer = new char[BUFFERSIZE];
    int threadID;
    reading (buffer, 4);
-   OpenFile *executable = fileSystem->Open(buffer);
-   if (executable == NULL) {
-      printf ("Unable to open file");
-      machine->WriteRegister(2, ERROR); // Return -1 if error
-      delete executable;
-   } else {
-      Thread *thread = new Thread("Exec Thread");
-      threadID = currentThread->processTable->addThread(thread);
-      thread->Fork(execAux, (void *) executable);
-      machine->WriteRegister(2, threadID); // Return the thread ID
-   }
+   Thread *thread = new Thread("Exec Thread");
+   threadID = currentThread->processTable->addThread(thread);
+   thread->Fork(execAux, (void *) buffer);
+   machine->WriteRegister(2, threadID); // Return the thread ID
    returnFromSystemCall();
    DEBUG('a', "Finishing Exec.\n");
 } // NachOS_Exec
@@ -793,7 +788,6 @@ void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
-
     switch ( which ) {
 
        case SyscallException:

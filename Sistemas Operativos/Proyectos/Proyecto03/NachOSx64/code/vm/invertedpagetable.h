@@ -32,9 +32,7 @@ class InvertedTable {
     int getPhysicalPage(int virtualPage); // returns physical page number or -1 if not found
     int searchPage(int page); // returns physical page number or -1 if not found
     int getLeastUsedPage(); // returns the least used page
-    void updatePageUsage(int pageNum, bool reset); // updates the usage of a page
-    void restorePages(); // restores all pages that belong to the thread
-    
+    void updatePageUsage(int pageNum, bool reset); // updates the usage of a page    
   private:
     BitMap* physicalMap; 
     Page* tableEntry;

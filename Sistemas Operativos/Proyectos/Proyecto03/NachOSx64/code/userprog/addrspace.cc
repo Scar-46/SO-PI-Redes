@@ -244,7 +244,10 @@ void AddrSpace::RestoreState()
         machine->pageTable = pageTable;
         machine->pageTableSize = numPages;
     #else
-        inverMap->restorePages();
+        //inverMap->restorePages();
+		for (int i = 0; i < TLBSize; i++) {
+			machine->tlb[i].valid = false;
+		}
     #endif
 }
 
