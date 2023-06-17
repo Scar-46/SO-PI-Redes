@@ -50,8 +50,8 @@ void InvertedTable::restorePages() {
         // if the virtualPage belongs to the current space
         int physicalPage = machine->tlb[virtualPage].physicalPage;
         if (this->tableEntry[physicalPage].threadSp == currentThread->space) {
-            // set the page as valid
-            machine->tlb[virtualPage].valid = true;
+            // set the page as invalid
+            machine->tlb[virtualPage].valid = false;
         }
     }
 }
