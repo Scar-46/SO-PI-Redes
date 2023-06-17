@@ -61,7 +61,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 {
     NoffHeader noffH;
     unsigned int i, size;
-
+	this->currentTLB = 0;
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) && 
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
@@ -141,6 +141,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 AddrSpace::AddrSpace (AddrSpace* fatherSpace) {
 	int stackSize = divRoundUp (UserStackSize, PageSize);
 	this->filename = fatherSpace->filename;
+	this->currentTLB = 0;
 	numPages = fatherSpace->numPages;
     #ifndef VM
 	    ASSERT (numPages <= (unsigned int) MyMap->NumClear()); // Check if there is enough space for the new process
@@ -244,7 +245,6 @@ void AddrSpace::RestoreState()
         machine->pageTable = pageTable;
         machine->pageTableSize = numPages;
     #else
-        //inverMap->restorePages();
 		for (int i = 0; i < TLBSize; i++) {
 			machine->tlb[i].valid = false;
 		}

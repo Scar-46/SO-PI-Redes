@@ -105,7 +105,7 @@ void execAux (void* filename) {
 	}
 	currentThread->space = new AddrSpace (executable); // create a new address space
    currentThread->space->SetFilename((char*)filenameAux); // set the filename
-   delete executable;
+   delete executable;			// close file
 	currentThread->space->InitRegisters(); // set the initial register values
 	currentThread->space->RestoreState();  // load page table register
 	machine->Run(); // jump to the user progam
@@ -126,6 +126,7 @@ void NachOS_Exec() {		// System call 2
    threadID = currentThread->processTable->addThread(thread);
    thread->Fork(execAux, (void *) buffer);
    machine->WriteRegister(2, threadID); // Return the thread ID
+
    returnFromSystemCall();
    DEBUG('a', "Finishing Exec.\n");
 } // NachOS_Exec
@@ -718,22 +719,23 @@ void NachOS_Shutdown() {	// System call 25
    DEBUG( 'u', "Exiting Shutdown System call\n" );
 }
 
-TranslationEntry* findTLBEntry() {
-   int i;
-   for ( i = 0; i < TLBSize; i++) {
-      if (!machine->tlb[i].valid) {
-         // found an invalid entry
-         break;
+TranslationEntry* secondChance() {
+   TranslationEntry* entry;
+   int currentTLB = currentThread->space->currentTLB;
+   while(true) {
+      entry = &(machine->tlb[currentTLB]);
+      currentTLB = (currentTLB + 1) % TLBSize;
+      if(entry->use) {
+         entry->use = false;
+      } else {
+         currentThread->space->currentTLB = currentTLB;
+         return entry;
       }
    }
-   if (i == TLBSize) {
-      i = Random() % TLBSize;
-   }
-   return &(machine->tlb[i]);
 }
 
 void updateTLB(int physicalPage) {
-   TranslationEntry* replaceEntry = findTLBEntry();
+   TranslationEntry* replaceEntry = secondChance();
 
    if(replaceEntry->valid) { // if the entry is valid (belongs to the current process)
       // save the page state in the page table
@@ -788,6 +790,7 @@ void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
+
     switch ( which ) {
 
        case SyscallException:

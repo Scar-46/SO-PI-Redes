@@ -40,6 +40,7 @@ class AddrSpace {
     void SavePageState(int virtualPageState, TranslationEntry* tlbToSave);
     void Swap(int physicalPage, int virtualPage);
 
+    int currentTLB;
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 					// for now!
