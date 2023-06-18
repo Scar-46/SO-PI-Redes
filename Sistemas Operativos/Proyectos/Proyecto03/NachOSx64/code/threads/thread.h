@@ -83,7 +83,7 @@ class Thread {
     HostMemoryAddress machineState[MachineStateSize];	// all registers except for stackTop
 
   public:
-
+    int threadID;					// Thread ID
     NachosOpenFilesTable* openFilesTable;	// Table of openfiles
     ProcessTable* processTable;		// Table of processes
     Semaphore* joinSem;            // Semaphore for join

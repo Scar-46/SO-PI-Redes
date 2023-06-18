@@ -184,8 +184,8 @@ AddrSpace::~AddrSpace()
 		for (unsigned int i = 0; i < numPages; ++i) {
 			MyMap->Clear(pageTable[i].physicalPage);
 		}
-		delete pageTable;
 	#endif
+	delete pageTable;
 }
 
 //----------------------------------------------------------------------
@@ -229,7 +229,13 @@ AddrSpace::InitRegisters()
 //----------------------------------------------------------------------
 
 void AddrSpace::SaveState() 
-{}
+{
+	#ifdef VM
+			for (int i = 0; i < TLBSize; i++) {
+			machine->tlb[i].valid = false;
+		}
+	#endif
+}
 
 //----------------------------------------------------------------------
 // AddrSpace::RestoreState
@@ -248,6 +254,7 @@ void AddrSpace::RestoreState()
 		for (int i = 0; i < TLBSize; i++) {
 			machine->tlb[i].valid = false;
 		}
+		swapFile->resetSwap();
     #endif
 }
 
@@ -255,45 +262,20 @@ void AddrSpace::SetFilename(const char* filename){
 	this->filename = filename;
 }
 
-
-int AddrSpace::GetPhysicalPage(int virtualPage) {
-    int virtPageLocation = -1;
-    if (this->pageTable[virtualPage].virtualPage != -1) {
-        virtPageLocation = this->pageTable[virtualPage].virtualPage;
-    }
-    return virtPageLocation;
-}
-
-
-void AddrSpace::MoveIntoTLB(TranslationEntry* tableToReplace, int virtTablePos) {
-    this->pageTable[virtTablePos].valid = true;
-    tableToReplace->physicalPage = (this->pageTable)[virtTablePos].physicalPage;
-    tableToReplace->virtualPage = (this->pageTable)[virtTablePos].virtualPage;
-    tableToReplace->valid = (this->pageTable)[virtTablePos].valid;
-
-	// update the page usage
-    inverMap->updatePageUsage((this->pageTable)[virtTablePos].physicalPage, true);
-}
-
 int AddrSpace::LoadFromMem(int virtualPage) {
-    int physicalPage = inverMap->searchPage(virtualPage);  // search for a free physical page
+	// search for a free physical page
+    int physicalPage = inverMap->requestPage(virtualPage, currentThread->threadID);
 
-    // set page table
-    this->pageTable[virtualPage].physicalPage = physicalPage;
-    this->pageTable[virtualPage].virtualPage = virtualPage;
-    this->pageTable[virtualPage].valid = true;
-
-    // read from executable
-    int ppn = this->pageTable[virtualPage].physicalPage;
+    // read from executable file
     OpenFile* executable = fileSystem->Open(this->filename);
-    executable->ReadAt(&(machine->mainMemory[ppn * PageSize]), PageSize, sizeof(NoffHeader) + virtualPage * PageSize);
+    executable->ReadAt(&(machine->mainMemory[physicalPage * PageSize]), PageSize, sizeof(NoffHeader) + virtualPage * PageSize);
     delete executable;
 
-    return virtualPage;
+    return physicalPage;
 }
 
 int AddrSpace::LoadFromSwap(int virtualPage) {
-    int physicalPage = inverMap->searchPage(virtualPage); // search for a free physical page
+    int physicalPage = inverMap->requestPage(virtualPage, currentThread->threadID); // search for a free physical page
     swapFile->readFromSwap(virtualPage, physicalPage); // read from swap
  
     // set page table
@@ -301,30 +283,7 @@ int AddrSpace::LoadFromSwap(int virtualPage) {
     this->pageTable[virtualPage].virtualPage = virtualPage;
     this->pageTable[virtualPage].valid = true;
 
-    return virtualPage;
+    return physicalPage;
 }
 
-void AddrSpace::SavePageState(int virtualPageState, TranslationEntry* TLBEntry) {
-    this->pageTable[virtualPageState].use = TLBEntry->use;
-    this->pageTable[virtualPageState].dirty = TLBEntry->use;
-}
-
-void AddrSpace::Swap(int physicalPage, int virtualPage) {
-    // remove from TLB
-    for (int entry = 0; entry < TLBSize; entry++) {
-        if (machine->tlb[entry].virtualPage == virtualPage) {
-            machine->tlb[entry].virtualPage = -1;
-            machine->tlb[entry].physicalPage = -1;
-            machine->tlb[entry].valid = false;
-        }
-    }
-	// remove from page table
-	this->pageTable[virtualPage].physicalPage = -1;
-    this->pageTable[virtualPage].virtualPage = -1;
-    this->pageTable[virtualPage].valid = false;
-
-
-    // load page onto swap
-    swapFile->writeToSwap(virtualPage, physicalPage);
-}
 

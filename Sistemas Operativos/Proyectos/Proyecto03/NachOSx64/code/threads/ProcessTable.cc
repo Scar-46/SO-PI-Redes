@@ -6,7 +6,6 @@ ProcessTable::ProcessTable() {
     openProcess.reserve(VECTOR_SIZE);  // Reserve space for the vector
     openProcessMap = new BitMap(VECTOR_SIZE); // A bitmap to control our vector]
     this->usage = 0;  // How many threads are using this table
-
 }
 
 ProcessTable::~ProcessTable() {

@@ -35,10 +35,6 @@ class AddrSpace {
     void SetFilename(const char* filename);	// Set the name of the executable file
     int LoadFromMem(int virtualPage);
     int LoadFromSwap(int virtualPage);
-    int GetPhysicalPage(int virtualPage);
-    void MoveIntoTLB(TranslationEntry* tableToReplace, int virtTablePos);
-    void SavePageState(int virtualPageState, TranslationEntry* tlbToSave);
-    void Swap(int physicalPage, int virtualPage);
 
     int currentTLB;
   private:

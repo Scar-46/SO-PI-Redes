@@ -33,12 +33,12 @@ const unsigned STACK_FENCEPOST = 0xdeadbeef;
 //----------------------------------------------------------------------
 
 Thread::Thread(const char* threadName)
-{
+{   
     name = threadName;
+    threadID = processIDMap->Find();
     openFilesTable = new NachosOpenFilesTable();
     processTable = new ProcessTable();
     joinSem = nullptr;
-    
 
     stackTop = NULL;
     stack = NULL;

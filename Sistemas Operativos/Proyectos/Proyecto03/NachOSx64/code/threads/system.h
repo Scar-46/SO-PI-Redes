@@ -47,6 +47,7 @@ extern SwapFile* swapFile;
 #include "machine.h"
 extern Machine* machine;	// user program memory and registers
 extern BitMap * MyMap;		// Declares a global variable defined elsewhere
+extern BitMap * processIDMap; // Declares a global variable defined elsewhere
 #endif
 
 #ifdef FILESYS_NEEDED 		// FILESYS or FILESYS_STUB 

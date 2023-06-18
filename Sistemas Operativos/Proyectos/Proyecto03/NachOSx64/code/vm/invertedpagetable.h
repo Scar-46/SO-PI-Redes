@@ -9,7 +9,7 @@
 #include "machine.h"
 #include "addrspace.h"
 #include "thread.h"
-
+#include "translate.h"
 #include <iostream>
 #include <vector>
 
@@ -18,25 +18,24 @@
 #ifndef INVERTED_PAGE_TABLE
 #define INVERTED_PAGE_TABLE
 
-typedef struct {
-    AddrSpace* threadSp;
-    int virtualPage;
-    int usage;
-} Page;
 
 class InvertedTable {
  public:
     InvertedTable(); // constructor
     ~InvertedTable(); // destructor
 
-    int getPhysicalPage(int virtualPage); // returns physical page number or -1 if not found
-    int searchPage(int page); // returns physical page number or -1 if not found
+    int findPage(int virtualPage, int processID); // returns physical page number
+    int requestPage(int virtualPage, int processID); // allocates a physical page
     int getLeastUsedPage(); // returns the least used page
-    void updatePageUsage(int pageNum, bool reset); // updates the usage of a page
-    
+    void swap(int physicalPage, int virtualPage); // swaps a page
+    void moveIntoTLB(TranslationEntry* tableToReplace, int virtTablePos);  // moves a page into the TLB
+    void savePageState(int physicalPage, TranslationEntry* TLBEntry);  // saves the state of a page on the TLB to the inverted table
+
   private:
     BitMap* physicalMap; 
-    Page* tableEntry;
+    TranslationEntry* tableEntry;
+    int* processID;
+    int currentVictim;
 };
 
 #endif // INVERTED_PAGE_TABLE

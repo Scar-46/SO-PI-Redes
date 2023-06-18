@@ -99,7 +99,7 @@ void execAux (void* filename) {
 	char* filenameAux = (char*) filename;
    OpenFile *executable = fileSystem->Open(filenameAux);
 	if (executable == NULL) {
-		printf ("Unable to open file");
+		printf ("Unable to open file %s\n", filenameAux);
       delete executable;
 		return;
 	}
@@ -182,7 +182,6 @@ void NachOS_Open() {		// System call 5
    char buffer[BUFFERSIZE];
    reading (buffer, 4);
    int idFileUnix = open(buffer, O_RDWR); // O_RDWR: Open for reading and writing. The file is created if it does not exist.
-
    if (idFileUnix == ERROR) {
       printf("Unable to open file %s\n", buffer);
       machine->WriteRegister(2, ERROR); // Return -1 if error
@@ -202,7 +201,6 @@ void NachOS_Write() {		// System call 6
    DEBUG('a', "Write to file, initiated by user program.\n");
    char buffer[BUFFERSIZE];
    int size = machine->ReadRegister( 5 );	// Read size to write
-
    // buffer = Read data from address given by user;
    reading (buffer, 4);
    OpenFileId descriptor = machine->ReadRegister( 6 );	// Read file descriptor
@@ -337,6 +335,7 @@ void NachOS_Fork() {		// System call 9
 	Thread * newT = new Thread( "child to execute Fork code" );
    // We need to share the Open File Table structure with this new child
    newT->openFilesTable = currentThread->openFilesTable;
+   newT->threadID = currentThread->threadID; // TODO(): Unmark the thread ID map
 	// Child and father will also share the same address space, except for the stack
 	// Text, init data and uninit data are shared, a new stack area must be created
 	// for the new child
@@ -736,13 +735,14 @@ TranslationEntry* secondChance() {
 
 void updateTLB(int physicalPage) {
    TranslationEntry* replaceEntry = secondChance();
-
+   
    if(replaceEntry->valid) { // if the entry is valid (belongs to the current process)
       // save the page state in the page table
-      currentThread->space->SavePageState(replaceEntry->physicalPage, replaceEntry);
+      inverMap->savePageState(replaceEntry->physicalPage, replaceEntry);
    }
+   
    // update the TLB entry
-   currentThread->space->MoveIntoTLB(replaceEntry, physicalPage);
+   inverMap->moveIntoTLB(replaceEntry, physicalPage);
 }
 
 void NachOS_PageFault() {
@@ -750,7 +750,7 @@ void NachOS_PageFault() {
    int badAddr = machine->ReadRegister(BadVAddrReg);
    int vpn = badAddr / PageSize; // virtual page number of the faulting address
    // check if the page is in the inverted page table
-   int ppn = currentThread->space->GetPhysicalPage(vpn);
+   int ppn = inverMap->findPage(vpn, currentThread->threadID);
    // if not found, check if it is in the swap file or in the executable
    if (ppn == -1) {
       if (swapFile->inSwap(vpn)) {
@@ -790,7 +790,6 @@ void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
-
     switch ( which ) {
 
        case SyscallException:

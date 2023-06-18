@@ -46,6 +46,8 @@ SynchDisk   *synchDisk;
 #ifdef USER_PROGRAM	// requires either FILESYS or FILESYS_STUB
 Machine *machine;	// user program memory and registers
 BitMap * MyMap;
+BitMap * processIDMap;
+int threadCounter = 0;
 #endif
 
 #ifdef NETWORK
@@ -108,6 +110,7 @@ Initialize(int argc, char **argv)
 #ifdef USER_PROGRAM
     bool debugUserProg = false;	// single step user program
     MyMap = new BitMap(NumPhysPages);
+    processIDMap = new BitMap(100);
 #endif
 #ifdef FILESYS_NEEDED
     bool format = false;	// format disk
@@ -226,6 +229,7 @@ Cleanup()
 #ifdef USER_PROGRAM
     delete machine;
     delete MyMap;
+    delete processIDMap;
 #endif
 
 #ifdef FILESYS_NEEDED

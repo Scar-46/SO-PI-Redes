@@ -224,9 +224,6 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
         for (entry = NULL, i = 0; i < TLBSize; i++)
     	    if (tlb[i].valid && (tlb[i].virtualPage == (int)vpn)) {
 		entry = &tlb[i];			// FOUND!
-		#ifdef VM
-				inverMap->updatePageUsage(tlb[i].physicalPage, false);
-		#endif
 		break;
 	    }
 	if (entry == NULL) {				// not found

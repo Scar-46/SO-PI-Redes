@@ -24,6 +24,7 @@ class SwapFile {
     void writeToSwap(int vpn, int ppn); // Write a page to the swap file
     void readFromSwap(int vpn, int ppn); // Read a page from the swap file
     bool inSwap(int vpn); // Check if a page is in the swap file
+    void resetSwap(); // Reset the swap file
   private:
     OpenFile* swapFile; // swap file
     BitMap* swapMap; // bitmap to store the pages in the swap file
