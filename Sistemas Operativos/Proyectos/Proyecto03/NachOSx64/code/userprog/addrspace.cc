@@ -262,6 +262,7 @@ void AddrSpace::SetFilename(const char* filename){
 	this->filename = filename;
 }
 
+#ifdef VM
 int AddrSpace::LoadFromMem(int virtualPage) {
 	// search for a free physical page
     int physicalPage = inverMap->requestPage(virtualPage, currentThread->threadID);
@@ -285,5 +286,4 @@ int AddrSpace::LoadFromSwap(int virtualPage) {
 
     return physicalPage;
 }
-
-
+#endif

@@ -717,7 +717,7 @@ void NachOS_Shutdown() {	// System call 25
    returnFromSystemCall();
    DEBUG( 'u', "Exiting Shutdown System call\n" );
 }
-
+#ifdef VM
 TranslationEntry* secondChance() {
    TranslationEntry* entry;
    int currentTLB = currentThread->space->currentTLB;
@@ -763,7 +763,7 @@ void NachOS_PageFault() {
    }
    updateTLB(ppn);
 }
-
+#endif
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -899,7 +899,9 @@ ExceptionHandler(ExceptionType which)
           break;
 
        case PageFaultException: {
-            NachOS_PageFault();
+            #ifdef VM
+               NachOS_PageFault();
+            #endif
           break;
        }
 
