@@ -26,9 +26,10 @@ Condition * condArray[10];
 BitMap * semsBitMap = new BitMap(10);
 BitMap * locksBitMap = new BitMap(10);
 BitMap * condsBitMap = new BitMap(10);
+#ifdef VM
 InvertedTable* inverMap = new InvertedTable();
 SwapFile* swapFile = new SwapFile();
-
+#endif
 					// for invoking context switches
 					
 // 2007, Jose Miguel Santos Espino

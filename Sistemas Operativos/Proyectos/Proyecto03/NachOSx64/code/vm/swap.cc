@@ -20,7 +20,6 @@ void SwapFile::writeToSwap(int virtPage, int physPage) {
 
 void SwapFile::readFromSwap(int virtPage, int physPage) {
     swapFile->ReadAt(&(machine->mainMemory[physPage * PageSize]), PageSize, virtPage * PageSize);
-    printf("Read from swap: vpn: %d ppn:%d\n", virtPage, physPage);
     swapMap->Clear(virtPage);
 }
 

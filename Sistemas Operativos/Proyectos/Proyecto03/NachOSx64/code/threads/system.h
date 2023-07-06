@@ -17,9 +17,10 @@
 #include "timer.h"
 #include "bitmap.h"
 #include "synch.h"
-
+#ifdef VM
 #include "invertedpagetable.h"
 #include "swap.h"
+#endif
 
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); 	// Initialization,
@@ -40,8 +41,10 @@ extern BitMap * semsBitMap;
 extern BitMap * locksBitMap;
 extern BitMap * condsBitMap;
 
+#ifdef VM
 extern InvertedTable* inverMap;
 extern SwapFile* swapFile;
+#endif
 
 #ifdef USER_PROGRAM
 #include "machine.h"

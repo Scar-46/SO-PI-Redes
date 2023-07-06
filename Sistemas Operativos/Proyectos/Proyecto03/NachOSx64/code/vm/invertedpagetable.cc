@@ -38,12 +38,14 @@ int InvertedTable::findPage(int virtualPage, int processID) {
 int InvertedTable::requestPage(int virtualPage, int processID) {
     // find an available page on the inverted table
     int physicalPage = this->physicalMap->Find();
-
     // if all pages used
     if (physicalPage == -1) {
         // find least used and set it to be replaced
         physicalPage = this->getLeastUsedPage();
-        swap(physicalPage, this->tableEntry[physicalPage].virtualPage);
+        if (this->tableEntry[physicalPage].dirty) {
+            // if dirty, swap
+            this->swap(physicalPage, this->tableEntry[physicalPage].virtualPage);
+        }
     }
     // set virtual virtual page on vector
     this->tableEntry[physicalPage].virtualPage = virtualPage;
@@ -58,11 +60,15 @@ void InvertedTable::swap(int physicalPage, int virtualPage) {
             machine->tlb[entry].virtualPage = -1;
             machine->tlb[entry].physicalPage = -1;
             machine->tlb[entry].valid = false;
+            machine->tlb[entry].use = false;
+            machine->tlb[entry].dirty = false;
         }
     }
 	// remove from page table
     this->tableEntry[physicalPage].virtualPage = -1;
     this->tableEntry[physicalPage].valid = false;
+    this->tableEntry[physicalPage].use = false;
+    this->tableEntry[physicalPage].dirty = false;
 
     // load page onto swap
     swapFile->writeToSwap(virtualPage, physicalPage);
@@ -71,11 +77,11 @@ void InvertedTable::swap(int physicalPage, int virtualPage) {
 int InvertedTable::getLeastUsedPage() {
     int leastUsed = this->currentVictim;
     while (true) {
-        if (!this->tableEntry[leastUsed].valid) {
+        if (!this->tableEntry[leastUsed].use) {
             this->currentVictim = (leastUsed + 1) % NumPhysPages;
             return leastUsed;
         }
-        this->tableEntry[leastUsed].valid = false;
+        this->tableEntry[leastUsed].use = false;
         leastUsed = (leastUsed + 1) % NumPhysPages;
     }
 }
@@ -88,6 +94,7 @@ void InvertedTable::moveIntoTLB(TranslationEntry* tableToReplace, int physicalPa
 }
 
 void InvertedTable::savePageState(int physicalPage, TranslationEntry* TLBEntry) {
+    this->tableEntry[physicalPage].valid = TLBEntry->valid;
     this->tableEntry[physicalPage].use = TLBEntry->use;
     this->tableEntry[physicalPage].dirty = TLBEntry->dirty;
 }

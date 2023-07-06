@@ -63,10 +63,10 @@ void reading (char* buffer, int reg) {
  *  System call interface: Halt()
  */
 void NachOS_Halt() {		// System call 0
-
 	DEBUG('a', "Shutdown, initiated by user program.\n");
-   	interrupt->Halt();
-
+   printf("\n");
+   currentThread->Finish();
+   interrupt->Halt();
 }
 
 
@@ -108,9 +108,9 @@ void execAux (void* filename) {
    delete executable;			// close file
 	currentThread->space->InitRegisters(); // set the initial register values
 	currentThread->space->RestoreState();  // load page table register
+   DEBUG('a', "Finishing Exec aux.\n");
 	machine->Run(); // jump to the user progam
    ASSERT(false); // machine->Run never returns;
-   DEBUG('a', "Finishing Exec aux.\n");
 }
 
 
@@ -126,7 +126,6 @@ void NachOS_Exec() {		// System call 2
    threadID = currentThread->processTable->addThread(thread);
    thread->Fork(execAux, (void *) buffer);
    machine->WriteRegister(2, threadID); // Return the thread ID
-
    returnFromSystemCall();
    DEBUG('a', "Finishing Exec.\n");
 } // NachOS_Exec
@@ -733,14 +732,17 @@ TranslationEntry* secondChance() {
    }
 }
 
+void saveTLB() {
+   for (int i = 0; i < TLBSize; i++) {
+      TranslationEntry* entry = &(machine->tlb[i]);
+      if (entry->valid || entry->use || entry->dirty) {
+         inverMap->savePageState(entry->physicalPage, entry);
+      }
+   }
+}
+
 void updateTLB(int physicalPage) {
    TranslationEntry* replaceEntry = secondChance();
-   
-   if(replaceEntry->valid) { // if the entry is valid (belongs to the current process)
-      // save the page state in the page table
-      inverMap->savePageState(replaceEntry->physicalPage, replaceEntry);
-   }
-   
    // update the TLB entry
    inverMap->moveIntoTLB(replaceEntry, physicalPage);
 }
@@ -749,6 +751,8 @@ void NachOS_PageFault() {
    stats->numPageFaults++; // increment page faults
    int badAddr = machine->ReadRegister(BadVAddrReg);
    int vpn = badAddr / PageSize; // virtual page number of the faulting address
+   // save the state of the tlb in the inverted page table
+   saveTLB();
    // check if the page is in the inverted page table
    int ppn = inverMap->findPage(vpn, currentThread->threadID);
    // if not found, check if it is in the swap file or in the executable
