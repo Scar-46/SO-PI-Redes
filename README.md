@@ -29,12 +29,11 @@ Para trabajar con los proyectos y tareas de este repositorio, necesitarás:
 - Dominio de la programación en C/C++.
 - Un entorno de desarrollo basado en Linux (recomendado).
 
-## Comenzando
+## Uso
 1. Clona el repositorio:
    ```bash
    git clone https://github.com/username/repo-name.git
    ```
 2. Navega al directorio del proyecto o asignación relevante.
-3. Sigue las instrucciones proporcionadas en los archivos `README.md` correspondientes.
 
 
